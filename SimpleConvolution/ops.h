@@ -31,8 +31,12 @@ std::chrono::microseconds ZeroPadding(T* inputData, T* outputData, int height, i
 
 	for (int ch = 0; ch < channel; ++ch)
 	{
+		#pragma region vectorize
+
 		int i = 0;
 		int j = 0;
+		repeat = height / vectorizeCount;
+		repeat *= repeat;
 		while (repeat-- > 0)
 		{
 			outputIndex = ch * outputArea + (j + 1) * outputWidth + (i + 1);
@@ -167,12 +171,13 @@ std::chrono::microseconds ZeroPadding(T* inputData, T* outputData, int height, i
 			outputData[outputIndex + 9] = inputData[inputIndex + 9];
 
 			i += vectorizeCount;
-			if (i > height)
+			if (i >= height)
 			{
 				i = 0;
 				j += vectorizeCount;
 			}
 		}
+		#pragma endregion
 	}
 
 	std::chrono::system_clock::time_point endTime = std::chrono::system_clock::now();
