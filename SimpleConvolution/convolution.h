@@ -1,4 +1,6 @@
 #pragma once
+#include <immintrin.h>
+
 #include "ops.h"
 
 #include <iostream>
@@ -60,17 +62,6 @@ std::chrono::microseconds Convolution2D_k3_s2(T* inputData, T* outputData, T* we
 
 	ZeroPadding(inputData, padInput, height, width, inChannel, padding);
 
-	//for (int i = 0; i < padHeight; ++i)
-	//{
-	//	for (int j = 0; j < padWidth; ++j)
-	//	{
-	//		if (j < 10 || j > padWidth - 11)
-	//			std::cout << padInput[i * padWidth + j] << ", ";
-	//	}
-	//	std::cout << std::endl;
-	//}
-
-
 	#pragma endregion
 
 	int kernelSize = inChannel * 9;
@@ -121,16 +112,6 @@ std::chrono::microseconds Convolution2D_k3_s2(T* inputData, T* outputData, T* we
 				outputData[tempOutputPos] += padInput[tempBotInputPos + 0] * weightVal_7;
 				outputData[tempOutputPos] += padInput[tempBotInputPos + 1] * weightVal_8;
 				outputData[tempOutputPos++] += padInput[tempBotInputPos + 2] * weightVal_9;
-				//std::cout << padInput[tempTopInputPos + 0] << ", " << padInput[tempTopInputPos + 1] << ", " << padInput[tempTopInputPos + 2] << std::endl;
-				//std::cout << padInput[tempMidInputPos + 0] << ", " << padInput[tempMidInputPos + 1] << ", " << padInput[tempMidInputPos + 2] << std::endl;
-				//std::cout << padInput[tempBotInputPos + 0] << ", " << padInput[tempBotInputPos + 1] << ", " << padInput[tempBotInputPos + 2] << std::endl;
-
-				//std::cout << weightVal_1 << ", " << weightVal_2 << ", " << weightVal_3 << std::endl;
-				//std::cout << weightVal_4 << ", " << weightVal_5 << ", " << weightVal_6 << std::endl;
-				//std::cout << weightVal_7 << ", " << weightVal_8 << ", " << weightVal_9 << std::endl;
-
-				//std::cout << outputData[0] << std::endl;
-
 				tempTopInputPos += stride;
 				tempMidInputPos += stride;
 				tempBotInputPos += stride;
@@ -1432,18 +1413,18 @@ std::chrono::microseconds Convolution2D_k3_s2(T* inputData, T* outputData, T* we
 					j += vectorizeCount;
 				}
 			}
-			//std::cout << tempOutputPos << ", " << outputData[0] << std::endl;
+
 			#pragma endregion
 		}
-		for (int r = 0; r < outputHeight; ++r)
-		{
-			for (int c = 0; c < outputWidth; ++c)
-			{
-				T val = outputData[outCh * outputArea + r * outputWidth + c] + bias[outCh];
-				//outputData[outCh * outputArea + r * outputWidth + c] = val;
-				outputData[outCh * outputArea + r * outputWidth + c] = (val < 0) ? 0 : val;
-			}
-		}
+		//for (int r = 0; r < outputHeight; ++r)
+		//{
+		//	for (int c = 0; c < outputWidth; ++c)
+		//	{
+		//		T val = outputData[outCh * outputArea + r * outputWidth + c] + bias[outCh];
+		//		//outputData[outCh * outputArea + r * outputWidth + c] = val;
+		//		outputData[outCh * outputArea + r * outputWidth + c] = (val < 0) ? 0 : val;
+		//	}
+		//}
 	}
 
 	delete[]padInput;
@@ -4229,7 +4210,7 @@ std::chrono::microseconds Convolution2D_Pointwise_k1_s1(T* inputData, T* outputD
 
 	int area = height * width;
 
-	int rowIndex;
+	int rowIndex = 0;
 	int tempInputPos;
 	int tempOutputPos;
 
@@ -4242,6 +4223,7 @@ std::chrono::microseconds Convolution2D_Pointwise_k1_s1(T* inputData, T* outputD
 	T* tempOutputData = outputData;
 	T* tempInputData = inputData;
 
+	#pragma omp parallel
 	for (int outCh = 0; outCh < outChannel; ++outCh)
 	{
 		outChIndex = outCh * area;
@@ -4250,155 +4232,339 @@ std::chrono::microseconds Convolution2D_Pointwise_k1_s1(T* inputData, T* outputD
 			inChIndex = inCh * area;
 			T weightVal = *weight;
 
-			int i = 0;
-			int j = 0;
-			repeat = height / vectorizeCount;
-			repeat *= repeat;
-			while (repeat-- > 0)
+			//for (int row = 0; row < height; ++row)
+			//{
+			//	int t = inChIndex + row * width;
+			//	int o = outChIndex + row * width;
+			//	for (int col = 0; col < width; ++col)
+			//	{
+			//		int tempInputPos = t + col;
+			//		int tempOutputPos = o + col;
+
+			//		outputData[tempOutputPos] += inputData[tempInputPos] * weightVal;
+			//	}
+			//}
+
+			#pragma omp for
+			for (int row = 0; row < height; ++row)
 			{
-				rowIndex = j * width;
-				//tempInputPos = inChIndex + rowIndex + i;
-				//tempOutputPos = outChIndex + rowIndex + i;
-				tempOutputData = outputData + inChIndex + rowIndex + i;
-				tempInputData = inputData + inChIndex + rowIndex + i;
-
-				*tempOutputData++ += *tempInputData++ * weightVal;
-				*tempOutputData++ += *tempInputData++ * weightVal;
-				*tempOutputData++ += *tempInputData++ * weightVal;
-				*tempOutputData++ += *tempInputData++ * weightVal;
-				*tempOutputData++ += *tempInputData++ * weightVal;
-				*tempOutputData++ += *tempInputData++ * weightVal;
-				*tempOutputData++ += *tempInputData++ * weightVal;
-				*tempOutputData++ += *tempInputData++ * weightVal;
-				*tempOutputData++ += *tempInputData++ * weightVal;
-
-				tempInputData += width - vectorizeCount;
-				tempOutputData += width - vectorizeCount;
-				*tempOutputData++ += *tempInputData++ * weightVal;
-				*tempOutputData++ += *tempInputData++ * weightVal;
-				*tempOutputData++ += *tempInputData++ * weightVal;
-				*tempOutputData++ += *tempInputData++ * weightVal;
-				*tempOutputData++ += *tempInputData++ * weightVal;
-				*tempOutputData++ += *tempInputData++ * weightVal;
-				*tempOutputData++ += *tempInputData++ * weightVal;
-				*tempOutputData++ += *tempInputData++ * weightVal;
-				*tempOutputData++ += *tempInputData++ * weightVal;
-
-				tempInputData += width - vectorizeCount;
-				tempOutputData += width - vectorizeCount;
-				*tempOutputData++ += *tempInputData++ * weightVal;
-				*tempOutputData++ += *tempInputData++ * weightVal;
-				*tempOutputData++ += *tempInputData++ * weightVal;
-				*tempOutputData++ += *tempInputData++ * weightVal;
-				*tempOutputData++ += *tempInputData++ * weightVal;
-				*tempOutputData++ += *tempInputData++ * weightVal;
-				*tempOutputData++ += *tempInputData++ * weightVal;
-				*tempOutputData++ += *tempInputData++ * weightVal;
-				*tempOutputData++ += *tempInputData++ * weightVal;
-
-				tempInputData += width - vectorizeCount;
-				tempOutputData += width - vectorizeCount;
-				*tempOutputData++ += *tempInputData++ * weightVal;
-				*tempOutputData++ += *tempInputData++ * weightVal;
-				*tempOutputData++ += *tempInputData++ * weightVal;
-				*tempOutputData++ += *tempInputData++ * weightVal;
-				*tempOutputData++ += *tempInputData++ * weightVal;
-				*tempOutputData++ += *tempInputData++ * weightVal;
-				*tempOutputData++ += *tempInputData++ * weightVal;
-				*tempOutputData++ += *tempInputData++ * weightVal;
-				*tempOutputData++ += *tempInputData++ * weightVal;
-
-				tempInputData += width - vectorizeCount;
-				tempOutputData += width - vectorizeCount;
-				*tempOutputData++ += *tempInputData++ * weightVal;
-				*tempOutputData++ += *tempInputData++ * weightVal;
-				*tempOutputData++ += *tempInputData++ * weightVal;
-				*tempOutputData++ += *tempInputData++ * weightVal;
-				*tempOutputData++ += *tempInputData++ * weightVal;
-				*tempOutputData++ += *tempInputData++ * weightVal;
-				*tempOutputData++ += *tempInputData++ * weightVal;
-				*tempOutputData++ += *tempInputData++ * weightVal;
-				*tempOutputData++ += *tempInputData++ * weightVal;
-
-				tempInputData += width - vectorizeCount;
-				tempOutputData += width - vectorizeCount;
-				*tempOutputData++ += *tempInputData++ * weightVal;
-				*tempOutputData++ += *tempInputData++ * weightVal;
-				*tempOutputData++ += *tempInputData++ * weightVal;
-				*tempOutputData++ += *tempInputData++ * weightVal;
-				*tempOutputData++ += *tempInputData++ * weightVal;
-				*tempOutputData++ += *tempInputData++ * weightVal;
-				*tempOutputData++ += *tempInputData++ * weightVal;
-				*tempOutputData++ += *tempInputData++ * weightVal;
-				*tempOutputData++ += *tempInputData++ * weightVal;
-
-				tempInputData += width - vectorizeCount;
-				tempOutputData += width - vectorizeCount;
-				*tempOutputData++ += *tempInputData++ * weightVal;
-				*tempOutputData++ += *tempInputData++ * weightVal;
-				*tempOutputData++ += *tempInputData++ * weightVal;
-				*tempOutputData++ += *tempInputData++ * weightVal;
-				*tempOutputData++ += *tempInputData++ * weightVal;
-				*tempOutputData++ += *tempInputData++ * weightVal;
-				*tempOutputData++ += *tempInputData++ * weightVal;
-				*tempOutputData++ += *tempInputData++ * weightVal;
-				*tempOutputData++ += *tempInputData++ * weightVal;
-
-				tempInputData += width - vectorizeCount;
-				tempOutputData += width - vectorizeCount;
-				*tempOutputData++ += *tempInputData++ * weightVal;
-				*tempOutputData++ += *tempInputData++ * weightVal;
-				*tempOutputData++ += *tempInputData++ * weightVal;
-				*tempOutputData++ += *tempInputData++ * weightVal;
-				*tempOutputData++ += *tempInputData++ * weightVal;
-				*tempOutputData++ += *tempInputData++ * weightVal;
-				*tempOutputData++ += *tempInputData++ * weightVal;
-				*tempOutputData++ += *tempInputData++ * weightVal;
-				*tempOutputData++ += *tempInputData++ * weightVal;
-
-				tempInputData += width - vectorizeCount;
-				tempOutputData += width - vectorizeCount;
-				*tempOutputData++ += *tempInputData++ * weightVal;
-				*tempOutputData++ += *tempInputData++ * weightVal;
-				*tempOutputData++ += *tempInputData++ * weightVal;
-				*tempOutputData++ += *tempInputData++ * weightVal;
-				*tempOutputData++ += *tempInputData++ * weightVal;
-				*tempOutputData++ += *tempInputData++ * weightVal;
-				*tempOutputData++ += *tempInputData++ * weightVal;
-				*tempOutputData++ += *tempInputData++ * weightVal;
-				*tempOutputData++ += *tempInputData++ * weightVal;
-
-				tempInputData += width - vectorizeCount;
-				tempOutputData += width - vectorizeCount;
-				*tempOutputData++ += *tempInputData++ * weightVal;
-				*tempOutputData++ += *tempInputData++ * weightVal;
-				*tempOutputData++ += *tempInputData++ * weightVal;
-				*tempOutputData++ += *tempInputData++ * weightVal;
-				*tempOutputData++ += *tempInputData++ * weightVal;
-				*tempOutputData++ += *tempInputData++ * weightVal;
-				*tempOutputData++ += *tempInputData++ * weightVal;
-				*tempOutputData++ += *tempInputData++ * weightVal;
-				*tempOutputData++ += *tempInputData++ * weightVal;
-
-				tempInputData += width - vectorizeCount;
-				tempOutputData += width - vectorizeCount;
-				*tempOutputData++ += *tempInputData++ * weightVal;
-				*tempOutputData++ += *tempInputData++ * weightVal;
-				*tempOutputData++ += *tempInputData++ * weightVal;
-				*tempOutputData++ += *tempInputData++ * weightVal;
-				*tempOutputData++ += *tempInputData++ * weightVal;
-				*tempOutputData++ += *tempInputData++ * weightVal;
-				*tempOutputData++ += *tempInputData++ * weightVal;
-				*tempOutputData++ += *tempInputData++ * weightVal;
-				*tempOutputData++ += *tempInputData++ * weightVal;
-
-				i += vectorizeCount;
-				if (i >= width)
+				int t = inChIndex + row * width;
+				int o = outChIndex + row * width;
+				for (int col = 0; col < width; ++col)
 				{
-					i = 0;
-					j += vectorizeCount;
+					int tempInputPos = t + col;
+					int tempOutputPos = o + col;
+
+					outputData[tempOutputPos] += inputData[tempInputPos] * weightVal;
 				}
 			}
+
+
+			//for (int row = 0; row < height; ++row)
+			//{
+			//	int i = 0;
+			//	repeat = height / vectorizeCount;
+
+			//	int t = outChIndex + row * width;
+			//	int tt = inChIndex + row * width;
+			//	while (repeat-- > 0)
+			//	{ 
+			//		int a = t + i;
+			//		int b = tt + i;
+			//		outputData[a + 0] += inputData[b + 0] * weightVal;
+			//		outputData[a + 1] += inputData[b + 1] * weightVal;
+			//		outputData[a + 2] += inputData[b + 2] * weightVal;
+			//		outputData[a + 3] += inputData[b + 3] * weightVal;
+			//		outputData[a + 4] += inputData[b + 4] * weightVal;
+			//		outputData[a + 5] += inputData[b + 5] * weightVal;
+			//		outputData[a + 6] += inputData[b + 6] * weightVal;
+			//		outputData[a + 7] += inputData[b + 7] * weightVal;
+			//		outputData[a + 8] += inputData[b + 8] * weightVal;
+			//		outputData[a + 9] += inputData[b + 9] * weightVal;
+
+			//		i += vectorizeCount;
+			//	}
+			//}
+
+
+
+			//int i = 0;
+			//int j = 0;
+			//repeat = height / vectorizeCount;
+			//repeat *= repeat;
+			//while (repeat-- > 0)
+			//{
+			//	// ver 1
+			//	
+			//	tempInputPos = inChIndex + rowIndex + i;
+			//	tempOutputPos = outChIndex + rowIndex + i;
+
+			//	outputData[tempOutputPos + 0] += inputData[tempInputPos + 0] * weightVal;
+			//	outputData[tempOutputPos + 1] += inputData[tempInputPos + 1] * weightVal;
+			//	outputData[tempOutputPos + 2] += inputData[tempInputPos + 2] * weightVal;
+			//	outputData[tempOutputPos + 3] += inputData[tempInputPos + 3] * weightVal;
+			//	outputData[tempOutputPos + 4] += inputData[tempInputPos + 4] * weightVal;
+			//	outputData[tempOutputPos + 5] += inputData[tempInputPos + 5] * weightVal;
+			//	outputData[tempOutputPos + 6] += inputData[tempInputPos + 6] * weightVal;
+			//	outputData[tempOutputPos + 7] += inputData[tempInputPos + 7] * weightVal;
+			//	outputData[tempOutputPos + 8] += inputData[tempInputPos + 8] * weightVal;
+			//	outputData[tempOutputPos + 9] += inputData[tempInputPos + 9] * weightVal;
+
+			//	outputData[tempOutputPos + 10] += inputData[tempInputPos + 10] * weightVal;
+			//	outputData[tempOutputPos + 11] += inputData[tempInputPos + 11] * weightVal;
+			//	outputData[tempOutputPos + 12] += inputData[tempInputPos + 12] * weightVal;
+			//	outputData[tempOutputPos + 13] += inputData[tempInputPos + 13] * weightVal;
+			//	outputData[tempOutputPos + 14] += inputData[tempInputPos + 14] * weightVal;
+			//	outputData[tempOutputPos + 15] += inputData[tempInputPos + 15] * weightVal;
+			//	outputData[tempOutputPos + 16] += inputData[tempInputPos + 16] * weightVal;
+			//	outputData[tempOutputPos + 17] += inputData[tempInputPos + 17] * weightVal;
+			//	outputData[tempOutputPos + 18] += inputData[tempInputPos + 18] * weightVal;
+			//	outputData[tempOutputPos + 19] += inputData[tempInputPos + 19] * weightVal;
+
+			//	outputData[tempOutputPos + 20] += inputData[tempInputPos + 20] * weightVal;
+			//	outputData[tempOutputPos + 21] += inputData[tempInputPos + 21] * weightVal;
+			//	outputData[tempOutputPos + 22] += inputData[tempInputPos + 22] * weightVal;
+			//	outputData[tempOutputPos + 23] += inputData[tempInputPos + 23] * weightVal;
+			//	outputData[tempOutputPos + 24] += inputData[tempInputPos + 24] * weightVal;
+			//	outputData[tempOutputPos + 25] += inputData[tempInputPos + 25] * weightVal;
+			//	outputData[tempOutputPos + 26] += inputData[tempInputPos + 26] * weightVal;
+			//	outputData[tempOutputPos + 27] += inputData[tempInputPos + 27] * weightVal;
+			//	outputData[tempOutputPos + 28] += inputData[tempInputPos + 28] * weightVal;
+			//	outputData[tempOutputPos + 29] += inputData[tempInputPos + 29] * weightVal;
+
+			//	outputData[tempOutputPos + 30] += inputData[tempInputPos + 30] * weightVal;
+			//	outputData[tempOutputPos + 31] += inputData[tempInputPos + 31] * weightVal;
+			//	outputData[tempOutputPos + 32] += inputData[tempInputPos + 32] * weightVal;
+			//	outputData[tempOutputPos + 33] += inputData[tempInputPos + 33] * weightVal;
+			//	outputData[tempOutputPos + 34] += inputData[tempInputPos + 34] * weightVal;
+			//	outputData[tempOutputPos + 35] += inputData[tempInputPos + 35] * weightVal;
+			//	outputData[tempOutputPos + 36] += inputData[tempInputPos + 36] * weightVal;
+			//	outputData[tempOutputPos + 37] += inputData[tempInputPos + 37] * weightVal;
+			//	outputData[tempOutputPos + 38] += inputData[tempInputPos + 38] * weightVal;
+			//	outputData[tempOutputPos + 39] += inputData[tempInputPos + 39] * weightVal;
+
+			//	outputData[tempOutputPos + 40] += inputData[tempInputPos + 40] * weightVal;
+			//	outputData[tempOutputPos + 41] += inputData[tempInputPos + 41] * weightVal;
+			//	outputData[tempOutputPos + 42] += inputData[tempInputPos + 42] * weightVal;
+			//	outputData[tempOutputPos + 43] += inputData[tempInputPos + 43] * weightVal;
+			//	outputData[tempOutputPos + 44] += inputData[tempInputPos + 44] * weightVal;
+			//	outputData[tempOutputPos + 45] += inputData[tempInputPos + 45] * weightVal;
+			//	outputData[tempOutputPos + 46] += inputData[tempInputPos + 46] * weightVal;
+			//	outputData[tempOutputPos + 47] += inputData[tempInputPos + 47] * weightVal;
+			//	outputData[tempOutputPos + 48] += inputData[tempInputPos + 48] * weightVal;
+			//	outputData[tempOutputPos + 49] += inputData[tempInputPos + 49] * weightVal;
+
+			//	outputData[tempOutputPos + 50] += inputData[tempInputPos + 50] * weightVal;
+			//	outputData[tempOutputPos + 51] += inputData[tempInputPos + 51] * weightVal;
+			//	outputData[tempOutputPos + 52] += inputData[tempInputPos + 52] * weightVal;
+			//	outputData[tempOutputPos + 53] += inputData[tempInputPos + 53] * weightVal;
+			//	outputData[tempOutputPos + 54] += inputData[tempInputPos + 54] * weightVal;
+			//	outputData[tempOutputPos + 55] += inputData[tempInputPos + 55] * weightVal;
+			//	outputData[tempOutputPos + 56] += inputData[tempInputPos + 56] * weightVal;
+			//	outputData[tempOutputPos + 57] += inputData[tempInputPos + 57] * weightVal;
+			//	outputData[tempOutputPos + 58] += inputData[tempInputPos + 58] * weightVal;
+			//	outputData[tempOutputPos + 59] += inputData[tempInputPos + 59] * weightVal;
+
+			//	outputData[tempOutputPos + 60] += inputData[tempInputPos + 60] * weightVal;
+			//	outputData[tempOutputPos + 61] += inputData[tempInputPos + 61] * weightVal;
+			//	outputData[tempOutputPos + 62] += inputData[tempInputPos + 62] * weightVal;
+			//	outputData[tempOutputPos + 63] += inputData[tempInputPos + 63] * weightVal;
+			//	outputData[tempOutputPos + 64] += inputData[tempInputPos + 64] * weightVal;
+			//	outputData[tempOutputPos + 65] += inputData[tempInputPos + 65] * weightVal;
+			//	outputData[tempOutputPos + 66] += inputData[tempInputPos + 66] * weightVal;
+			//	outputData[tempOutputPos + 67] += inputData[tempInputPos + 67] * weightVal;
+			//	outputData[tempOutputPos + 68] += inputData[tempInputPos + 68] * weightVal;
+			//	outputData[tempOutputPos + 69] += inputData[tempInputPos + 69] * weightVal;
+
+			//	outputData[tempOutputPos + 70] += inputData[tempInputPos + 70] * weightVal;
+			//	outputData[tempOutputPos + 71] += inputData[tempInputPos + 71] * weightVal;
+			//	outputData[tempOutputPos + 72] += inputData[tempInputPos + 72] * weightVal;
+			//	outputData[tempOutputPos + 73] += inputData[tempInputPos + 73] * weightVal;
+			//	outputData[tempOutputPos + 74] += inputData[tempInputPos + 74] * weightVal;
+			//	outputData[tempOutputPos + 75] += inputData[tempInputPos + 75] * weightVal;
+			//	outputData[tempOutputPos + 76] += inputData[tempInputPos + 76] * weightVal;
+			//	outputData[tempOutputPos + 77] += inputData[tempInputPos + 77] * weightVal;
+			//	outputData[tempOutputPos + 78] += inputData[tempInputPos + 78] * weightVal;
+			//	outputData[tempOutputPos + 79] += inputData[tempInputPos + 79] * weightVal;
+
+			//	outputData[tempOutputPos + 80] += inputData[tempInputPos + 80] * weightVal;
+			//	outputData[tempOutputPos + 81] += inputData[tempInputPos + 81] * weightVal;
+			//	outputData[tempOutputPos + 82] += inputData[tempInputPos + 82] * weightVal;
+			//	outputData[tempOutputPos + 83] += inputData[tempInputPos + 83] * weightVal;
+			//	outputData[tempOutputPos + 84] += inputData[tempInputPos + 84] * weightVal;
+			//	outputData[tempOutputPos + 85] += inputData[tempInputPos + 85] * weightVal;
+			//	outputData[tempOutputPos + 86] += inputData[tempInputPos + 86] * weightVal;
+			//	outputData[tempOutputPos + 87] += inputData[tempInputPos + 87] * weightVal;
+			//	outputData[tempOutputPos + 88] += inputData[tempInputPos + 88] * weightVal;
+			//	outputData[tempOutputPos + 89] += inputData[tempInputPos + 89] * weightVal;
+
+			//	outputData[tempOutputPos + 90] += inputData[tempInputPos + 90] * weightVal;
+			//	outputData[tempOutputPos + 91] += inputData[tempInputPos + 91] * weightVal;
+			//	outputData[tempOutputPos + 92] += inputData[tempInputPos + 92] * weightVal;
+			//	outputData[tempOutputPos + 93] += inputData[tempInputPos + 93] * weightVal;
+			//	outputData[tempOutputPos + 94] += inputData[tempInputPos + 94] * weightVal;
+			//	outputData[tempOutputPos + 95] += inputData[tempInputPos + 95] * weightVal;
+			//	outputData[tempOutputPos + 96] += inputData[tempInputPos + 96] * weightVal;
+			//	outputData[tempOutputPos + 97] += inputData[tempInputPos + 97] * weightVal;
+			//	outputData[tempOutputPos + 98] += inputData[tempInputPos + 98] * weightVal;
+			//	outputData[tempOutputPos + 99] += inputData[tempInputPos + 99] * weightVal;
+
+
+
+			//	// ver 2
+			//	//rowIndex = j * width;
+			//	//tempOutputData = outputData + inChIndex + rowIndex + i;
+			//	//tempInputData = inputData + inChIndex + rowIndex + i;
+
+			//	//*tempOutputData++ += *tempInputData++ * weightVal;
+			//	//*tempOutputData++ += *tempInputData++ * weightVal;
+			//	//*tempOutputData++ += *tempInputData++ * weightVal;
+			//	//*tempOutputData++ += *tempInputData++ * weightVal;
+			//	//*tempOutputData++ += *tempInputData++ * weightVal;
+			//	//*tempOutputData++ += *tempInputData++ * weightVal;
+			//	//*tempOutputData++ += *tempInputData++ * weightVal;
+			//	//*tempOutputData++ += *tempInputData++ * weightVal;
+			//	//*tempOutputData++ += *tempInputData++ * weightVal;
+			//	//*tempOutputData++ += *tempInputData++ * weightVal;
+
+			//	//tempInputData += width - vectorizeCount;
+			//	//tempOutputData += width - vectorizeCount;
+			//	//*tempOutputData++ += *tempInputData++ * weightVal;
+			//	//*tempOutputData++ += *tempInputData++ * weightVal;
+			//	//*tempOutputData++ += *tempInputData++ * weightVal;
+			//	//*tempOutputData++ += *tempInputData++ * weightVal;
+			//	//*tempOutputData++ += *tempInputData++ * weightVal;
+			//	//*tempOutputData++ += *tempInputData++ * weightVal;
+			//	//*tempOutputData++ += *tempInputData++ * weightVal;
+			//	//*tempOutputData++ += *tempInputData++ * weightVal;
+			//	//*tempOutputData++ += *tempInputData++ * weightVal;
+			//	//*tempOutputData++ += *tempInputData++ * weightVal;
+
+			//	//tempInputData += width - vectorizeCount;
+			//	//tempOutputData += width - vectorizeCount;
+			//	//*tempOutputData++ += *tempInputData++ * weightVal;
+			//	//*tempOutputData++ += *tempInputData++ * weightVal;
+			//	//*tempOutputData++ += *tempInputData++ * weightVal;
+			//	//*tempOutputData++ += *tempInputData++ * weightVal;
+			//	//*tempOutputData++ += *tempInputData++ * weightVal;
+			//	//*tempOutputData++ += *tempInputData++ * weightVal;
+			//	//*tempOutputData++ += *tempInputData++ * weightVal;
+			//	//*tempOutputData++ += *tempInputData++ * weightVal;
+			//	//*tempOutputData++ += *tempInputData++ * weightVal;
+			//	//*tempOutputData++ += *tempInputData++ * weightVal;
+
+			//	//tempInputData += width - vectorizeCount;
+			//	//tempOutputData += width - vectorizeCount;
+			//	//*tempOutputData++ += *tempInputData++ * weightVal;
+			//	//*tempOutputData++ += *tempInputData++ * weightVal;
+			//	//*tempOutputData++ += *tempInputData++ * weightVal;
+			//	//*tempOutputData++ += *tempInputData++ * weightVal;
+			//	//*tempOutputData++ += *tempInputData++ * weightVal;
+			//	//*tempOutputData++ += *tempInputData++ * weightVal;
+			//	//*tempOutputData++ += *tempInputData++ * weightVal;
+			//	//*tempOutputData++ += *tempInputData++ * weightVal;
+			//	//*tempOutputData++ += *tempInputData++ * weightVal;
+			//	//*tempOutputData++ += *tempInputData++ * weightVal;
+
+			//	//tempInputData += width - vectorizeCount;
+			//	//tempOutputData += width - vectorizeCount;
+			//	//*tempOutputData++ += *tempInputData++ * weightVal;
+			//	//*tempOutputData++ += *tempInputData++ * weightVal;
+			//	//*tempOutputData++ += *tempInputData++ * weightVal;
+			//	//*tempOutputData++ += *tempInputData++ * weightVal;
+			//	//*tempOutputData++ += *tempInputData++ * weightVal;
+			//	//*tempOutputData++ += *tempInputData++ * weightVal;
+			//	//*tempOutputData++ += *tempInputData++ * weightVal;
+			//	//*tempOutputData++ += *tempInputData++ * weightVal;
+			//	//*tempOutputData++ += *tempInputData++ * weightVal;
+			//	//*tempOutputData++ += *tempInputData++ * weightVal;
+
+			//	//tempInputData += width - vectorizeCount;
+			//	//tempOutputData += width - vectorizeCount;
+			//	//*tempOutputData++ += *tempInputData++ * weightVal;
+			//	//*tempOutputData++ += *tempInputData++ * weightVal;
+			//	//*tempOutputData++ += *tempInputData++ * weightVal;
+			//	//*tempOutputData++ += *tempInputData++ * weightVal;
+			//	//*tempOutputData++ += *tempInputData++ * weightVal;
+			//	//*tempOutputData++ += *tempInputData++ * weightVal;
+			//	//*tempOutputData++ += *tempInputData++ * weightVal;
+			//	//*tempOutputData++ += *tempInputData++ * weightVal;
+			//	//*tempOutputData++ += *tempInputData++ * weightVal;
+			//	//*tempOutputData++ += *tempInputData++ * weightVal;
+
+			//	//tempInputData += width - vectorizeCount;
+			//	//tempOutputData += width - vectorizeCount;
+			//	//*tempOutputData++ += *tempInputData++ * weightVal;
+			//	//*tempOutputData++ += *tempInputData++ * weightVal;
+			//	//*tempOutputData++ += *tempInputData++ * weightVal;
+			//	//*tempOutputData++ += *tempInputData++ * weightVal;
+			//	//*tempOutputData++ += *tempInputData++ * weightVal;
+			//	//*tempOutputData++ += *tempInputData++ * weightVal;
+			//	//*tempOutputData++ += *tempInputData++ * weightVal;
+			//	//*tempOutputData++ += *tempInputData++ * weightVal;
+			//	//*tempOutputData++ += *tempInputData++ * weightVal;
+			//	//*tempOutputData++ += *tempInputData++ * weightVal;
+
+			//	//tempInputData += width - vectorizeCount;
+			//	//tempOutputData += width - vectorizeCount;
+			//	//*tempOutputData++ += *tempInputData++ * weightVal;
+			//	//*tempOutputData++ += *tempInputData++ * weightVal;
+			//	//*tempOutputData++ += *tempInputData++ * weightVal;
+			//	//*tempOutputData++ += *tempInputData++ * weightVal;
+			//	//*tempOutputData++ += *tempInputData++ * weightVal;
+			//	//*tempOutputData++ += *tempInputData++ * weightVal;
+			//	//*tempOutputData++ += *tempInputData++ * weightVal;
+			//	//*tempOutputData++ += *tempInputData++ * weightVal;
+			//	//*tempOutputData++ += *tempInputData++ * weightVal;
+			//	//*tempOutputData++ += *tempInputData++ * weightVal;
+
+			//	//tempInputData += width - vectorizeCount;
+			//	//tempOutputData += width - vectorizeCount;
+			//	//*tempOutputData++ += *tempInputData++ * weightVal;
+			//	//*tempOutputData++ += *tempInputData++ * weightVal;
+			//	//*tempOutputData++ += *tempInputData++ * weightVal;
+			//	//*tempOutputData++ += *tempInputData++ * weightVal;
+			//	//*tempOutputData++ += *tempInputData++ * weightVal;
+			//	//*tempOutputData++ += *tempInputData++ * weightVal;
+			//	//*tempOutputData++ += *tempInputData++ * weightVal;
+			//	//*tempOutputData++ += *tempInputData++ * weightVal;
+			//	//*tempOutputData++ += *tempInputData++ * weightVal;
+			//	//*tempOutputData++ += *tempInputData++ * weightVal;
+
+			//	//tempInputData += width - vectorizeCount;
+			//	//tempOutputData += width - vectorizeCount;
+			//	//*tempOutputData++ += *tempInputData++ * weightVal;
+			//	//*tempOutputData++ += *tempInputData++ * weightVal;
+			//	//*tempOutputData++ += *tempInputData++ * weightVal;
+			//	//*tempOutputData++ += *tempInputData++ * weightVal;
+			//	//*tempOutputData++ += *tempInputData++ * weightVal;
+			//	//*tempOutputData++ += *tempInputData++ * weightVal;
+			//	//*tempOutputData++ += *tempInputData++ * weightVal;
+			//	//*tempOutputData++ += *tempInputData++ * weightVal;
+			//	//*tempOutputData++ += *tempInputData++ * weightVal;
+			//	//*tempOutputData++ += *tempInputData++ * weightVal;
+
+			//	//tempInputData += width - vectorizeCount;
+			//	//tempOutputData += width - vectorizeCount;
+			//	//*tempOutputData++ += *tempInputData++ * weightVal;
+			//	//*tempOutputData++ += *tempInputData++ * weightVal;
+			//	//*tempOutputData++ += *tempInputData++ * weightVal;
+			//	//*tempOutputData++ += *tempInputData++ * weightVal;
+			//	//*tempOutputData++ += *tempInputData++ * weightVal;
+			//	//*tempOutputData++ += *tempInputData++ * weightVal;
+			//	//*tempOutputData++ += *tempInputData++ * weightVal;
+			//	//*tempOutputData++ += *tempInputData++ * weightVal;
+			//	//*tempOutputData++ += *tempInputData++ * weightVal;
+			//	//*tempOutputData++ += *tempInputData++ * weightVal;
+
+			//	i += vectorizeCount;
+			//	if (i >= width)
+			//	{
+			//		i = 0;
+			//		j += vectorizeCount;
+			//		rowIndex = j * width;
+			//	}
+			//}
 			++weight;
 		}
 

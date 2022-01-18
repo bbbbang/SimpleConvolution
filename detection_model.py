@@ -346,7 +346,7 @@ if __name__=='__main__':
 	model(temp)
 
 
-	export_weight_binary(model, './src/KHI/utils/detection_test.w')
+	export_weight_binary(model, './detection_test.w')
 
 	# flatten_weight_file = './src/KHI/utils/detection1'
 	# bin_file = open(flatten_weight_file + '.w', 'wb')

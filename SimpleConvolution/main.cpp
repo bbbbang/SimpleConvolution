@@ -153,20 +153,20 @@ int main()
 
 
 	// temp
-	std::vector<float> weight;
-	std::vector<float> bias;
+	//std::vector<float> weight;
+	//std::vector<float> bias;
 
-	for (int i = 0; i < 8000; ++i)
-	{
-		weight.push_back(1.1f);
-		bias.push_back(1.1f);
-	}
+	//for (int i = 0; i < 8000; ++i)
+	//{
+	//	weight.push_back(1.1f);
+	//	bias.push_back(1.1f);
+	//}
 
-	for (int i = 1; i < 61; ++i)
-	{
-		std::string id = std::to_string(i);
-		layersMap[id] = Layer{ 48,48,3,1,1,1,48 * 48 * 3 * 3,weight,bias };
-	}
+	//for (int i = 1; i < 61; ++i)
+	//{
+	//	std::string id = std::to_string(i);
+	//	layersMap[id] = Layer{ 48,48,3,1,1,1,48 * 48 * 3 * 3,weight,bias };
+	//}
 
 
 
@@ -399,11 +399,11 @@ int main()
 		total += milli;
 	}
 
-	std::cout << "detection average : " << total.count() / 1000 << " us ... " << total.count() / 1000 / 1000 << " ms" << std::endl;
+	std::cout << "detection average : " << total.count() / 100 << " us ... " << total.count() / 100 / 1000 << " ms" << std::endl;
 	total = total.zero();
-	std::cout << "detection nconv average : " << nconv.count() / 1000 << " us ... " << nconv.count() / 1000 / 1000 << " ms" << std::endl;
-	std::cout << "detection dconv average : " << dconv.count() / 1000 << " us ... " << dconv.count() / 1000 / 1000 << " ms" << std::endl;
-	std::cout << "detection pconv average : " << pconv.count() / 1000 << " us ... " << pconv.count() / 1000 / 1000 << " ms" << std::endl;
+	std::cout << "detection nconv average : " << nconv.count() / 100 << " us ... " << nconv.count() / 100 / 1000 << " ms" << std::endl;
+	std::cout << "detection dconv average : " << dconv.count() / 100 << " us ... " << dconv.count() / 100 / 1000 << " ms" << std::endl;
+	std::cout << "detection pconv average : " << pconv.count() / 100 << " us ... " << pconv.count() / 100 / 1000 << " ms" << std::endl;
 
 
 	// classification model
