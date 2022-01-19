@@ -4332,13 +4332,20 @@ std::chrono::microseconds Convolution2D_Pointwise_k1_s1(T* inputData, T* outputD
 			T val = 0.0f;
 			for (int inCh = 0; inCh < inChannel; ++inCh)
 			{
-				val += inputData[inCh * area + i] * weight[inCh];
+				val += *inputData * *weight;
+
+				inputData += area;
+				++weight;
 			}
 			val = val + *bias;
 			val = (val < 0) ? 0 : val;
 			*outputData = val;
 
 			++outputData;
+
+			weight -= inChannel;
+			inputData -= area * inChannel;
+			++inputData;
 		}
 		++bias;
 	
