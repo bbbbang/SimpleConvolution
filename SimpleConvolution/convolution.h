@@ -1687,7 +1687,7 @@ std::chrono::microseconds Convolution2D_k3_s2(T* inputData, T* outputData, T* we
 
 			for (int row = 0; row < height; row += stride)
 			{
-				for (int col = 0; col < width; col += stride, tempInputData1 += stride, tempInputData2 += stride, tempInputData3 += stride, ++outputData)
+				for (int col = 0; col < width; col += stride)
 				{
 					T val = *outputData;
 
@@ -1708,36 +1708,31 @@ std::chrono::microseconds Convolution2D_k3_s2(T* inputData, T* outputData, T* we
 						val7 * weightVal_7 + val8 * weightVal_8 + val9 * weightVal_9;
 					*outputData = val;
 
-					//tempInputData1 += stride;
-					//tempInputData2 += stride;
-					//tempInputData3 += stride;
-					//++outputData;
+					tempInputData1 += stride;
+					tempInputData2 += stride;
+					tempInputData3 += stride;
+					++outputData;
 				}
-				tempInputData1 += padWidth + 1;
-				tempInputData2 += padWidth + 1;
-				tempInputData3 += padWidth + 1;
+				tempInputData1 += padWidth+2;
+				tempInputData2 += padWidth+2;
+				tempInputData3 += padWidth+2;
 			}
-			tempInputData1 += padWidth + 1;
-			tempInputData2 += padWidth + 1;
-			tempInputData3 += padWidth + 1;
-
-			outputData = tempOutputData;
+			tempInputData1 += padWidth*2 ;
+			tempInputData2 += padWidth*2 ;
+			tempInputData3 += padWidth*2 ;
+			outputData -= outputArea;
 		}
-		for (int i = 0; i < area; ++i)
+		for (int i = 0; i < outputArea; ++i)
 		{
 			T val = *outputData + *bias;
 			val = (val < 0) ? 0 : val;
 			*outputData = val;
-
 			++outputData;
 		}
 		++bias;
-		tempOutputData = outputData;
-
 		tempInputData1 = padInput;
 		tempInputData2 = padInput + padWidth;
 		tempInputData3 = padInput + padWidth + padWidth;
-
 	}
 	delete[]padInput;
 
@@ -3878,10 +3873,10 @@ std::chrono::microseconds Convolution2D_Depthwise_k3_s1(T* inputData, T* outputD
 	for (int i = 0; i < inChannel * padArea; ++i)
 	{
 		padInput[i] = 0;
+		outputData[i] = 0;
 	}
 
 	ZeroPadding(inputData, padInput, height, width, inChannel, padding);
-
 
 	T val_1, val_2, val_3, val_4, val_5, val_6;
 
@@ -3919,6 +3914,7 @@ std::chrono::microseconds Convolution2D_Depthwise_k3_s1(T* inputData, T* outputD
 				val = val + val1 * weightVal_1 + val2 * weightVal_2 + val3 * weightVal_3 +
 					val4 * weightVal_4 + val5 * weightVal_5 + val6 * weightVal_6 +
 					val7 * weightVal_7 + val8 * weightVal_8 + val9 * weightVal_9;
+				*outputData = val;
 
 				++tempInputData1;
 				++tempInputData2;
@@ -3929,30 +3925,21 @@ std::chrono::microseconds Convolution2D_Depthwise_k3_s1(T* inputData, T* outputD
 			tempInputData2 += 2;
 			tempInputData3 += 2;
 		}
-		tempInputData1 += 2;
-		tempInputData2 += 2;
-		tempInputData3 += 2;
+		tempInputData1 += padWidth*2;
+		tempInputData2 += padWidth*2;
+		tempInputData3 += padWidth*2;
 		
 		outputData = tempOutputData;
 		for (int i = 0; i < area; ++i)
 		{
 			T val = *outputData + *bias;
-			val = (val < 0) ? 0 : val;
+			//val = (val < 0) ? 0 : val;
 			*outputData = val;
 
 			++outputData;
 		}
 		++bias;
 		tempOutputData = outputData;
-
-		//for (int r = 0; r < outputHeight; ++r)
-		//{
-		//	for (int c = 0; c < outputWidth; ++c)
-		//	{
-		//		T val = outputData[inCh * outputArea + r * outputWidth + c] + bias[inCh];
-		//		outputData[inCh * outputArea + r * outputWidth + c] = (val < 0) ? 0 : val;
-		//	}
-		//}
 	}
 	delete[]padInput;
 
@@ -4313,6 +4300,16 @@ std::chrono::microseconds Convolution2D_Pointwise_k1_s2(T* inputData, T* outputD
 //
 
 
+template <typename T>
+std::chrono::microseconds Transpose(T* inputData, T* outputData, int height, int width, int channel);
+
+template <typename T>
+std::chrono::microseconds Transpose(T* inputData, T* outputData, int height, int width, int channel)
+{
+	
+}
+
+
 
 template <typename T>
 std::chrono::microseconds Convolution2D_Pointwise_k1_s1(T* inputData, T* outputData, T* weight, T* bias,
@@ -4322,72 +4319,71 @@ std::chrono::microseconds Convolution2D_Pointwise_k1_s1(T* inputData, T* outputD
 	std::chrono::system_clock::time_point startTime = std::chrono::system_clock::now();
 
 	int area = height * width;
+
+	for (int i = 0; i < inChannel * area; ++i)
+	{
+		outputData[i] = 0;
+	}
+
 	T* tempOutputData = outputData;
 	T* tempInputData = inputData;
 
 	for (int outCh = 0; outCh < outChannel; ++outCh)
 	{
-		for (int i = 0; i < area; ++i)
-		{
-			T val = 0.0f;
-			for (int inCh = 0; inCh < inChannel; ++inCh)
-			{
-				val += *inputData * *weight;
 
-				inputData += area;
-				++weight;
-			}
-			val = val + *bias;
-			val = (val < 0) ? 0 : val;
-			*outputData = val;
-
-			++outputData;
-
-			weight -= inChannel;
-			inputData -= area * inChannel;
-			++inputData;
-		}
-		++bias;
-	
-		
-
+	//	inputData = tempInputData;
+	//	for (int i = 0; i < area; ++i)
+	//	{
+	//		T val = 0;
+	//		for (int inCh = 0; inCh < inChannel; ++inCh)
+	//		{
+	//			
+	//			T v = inputData[i + inCh];
+	//			T f = *weight;
+	//			//v = v * f;
+	//			val += v * f;
+	//		}
+	//		val = val + *bias;
+	//		val = (val < 0) ? 0 : val;
+	//		*(outputData++) = val;
+	//	}
+	//	++bias;
 
 
 		//int outPos = outCh * area;
-		//for (int inCh = 0; inCh < inChannel; ++inCh)
-		//{
-		//	T weightVal = *weight;
-		//	outputData = tempOutputData;
-		//	int inPos = inCh * area;
-		//	
-		//	
-		//	for (int i = 0; i < area; ++i)
-		//	{
-		//		T o = *outputData;
-		//		//T o = outputData[outPos + i];
-		//		//T p = *inputData++;
-		//		//o = o + p * weightVal;
-		//		o = o + inputData[inPos + i] * weightVal;
-		//		//outputData[outPos + i] = o;
-		//		*outputData = o;
-		//		++outputData;
-		//	}
-		//}
+		for (int inCh = 0; inCh < inChannel; ++inCh)
+		{
+			T weightVal = *weight;
+			//outputData = tempOutputData;
+			int inPos = inCh * area;
+			
+			for (int i = 0; i < area; ++i)
+			{
+				T o = *outputData;
+				//T o = outputData[outPos + i];
+				//T p = *inputData++;
+				//o = o + p * weightVal;
+				o = o + inputData[inPos + i] * weightVal;
+				//outputData[outPos + i] = o;
+				(*outputData) = o;
+				++outputData;
+			}
+			++weight;
+			outputData -= area;
+		}
 		//outputData = tempOutputData;
 		//inputData = tempInputData;
 
-
-		//for (int i = 0; i < area; ++i)
-		//{
-		//	T val = *outputData + *bias;
-		//	val = (val < 0) ? 0 : val;
-		//	*outputData = val;
-
-		//	++outputData;
-		//}
+		for (int i = 0; i < area; ++i)
+		{
+			T val = *outputData + *bias;
+			//val = (val < 0) ? 0 : val;
+			*outputData = val;
+			++outputData;
+		}
 		//tempOutputData = outputData;
-
-		//++bias;
+		//std::cout << idx << std::endl;
+		++bias;
 		//++weight;
 	}
 
