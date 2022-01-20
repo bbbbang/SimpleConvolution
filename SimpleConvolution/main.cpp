@@ -5,6 +5,7 @@
 #include <string>
 #include <unordered_map>
 
+
 struct Layer
 {
 	//int width;
@@ -121,7 +122,7 @@ int main()
 
 	std::unordered_map<std::string, Layer> layersMap;
 
-	std::string weightsName = "./detection_test.w";
+	std::string weightsName = "E:/vscode/Torch/MultiNet_OD_custom/src/KHI/utils/detection_test.w";
 	ReadWeights_debug(weightsName, layersMap);
 
 	for (std::pair<std::string, Layer> elem : layersMap)
@@ -134,44 +135,42 @@ int main()
 
 	float* inputData = new float[inputSize * inputSize * 96];
 	float* outputData = new float[inputSize * inputSize * 96];
+	float* tempData = new float[inputSize * inputSize * 96];
 
 	for (int i = 0; i < inputSize * inputSize * 96; ++i)
 	{
 		inputData[i] = 1;
 		outputData[i] = 0;
+		tempData[i] = 0;
 	}
 
-
+	//for (int i = 0; i < 100; ++i)
+	//{
+	//	std::cout << inputData[i] << ", ";
+	//}
 	std::chrono::microseconds dconv;
 	std::chrono::microseconds pconv;
 	std::chrono::microseconds nconv;
 
+	std::chrono::microseconds resizeOps;
+	std::chrono::microseconds addOps;
+	std::chrono::microseconds maxpoolOps;
+	std::chrono::microseconds concatOps;
+	std::chrono::microseconds paddingOps;
+
+
 	dconv = dconv.zero();
 	pconv = pconv.zero();
 	nconv = nconv.zero();
-
-
-
-	// temp
-	//std::vector<float> weight;
-	//std::vector<float> bias;
-
-	//for (int i = 0; i < 8000; ++i)
-	//{
-	//	weight.push_back(1.1f);
-	//	bias.push_back(1.1f);
-	//}
-
-	//for (int i = 1; i < 61; ++i)
-	//{
-	//	std::string id = std::to_string(i);
-	//	layersMap[id] = Layer{ 48,48,3,1,1,1,48 * 48 * 3 * 3,weight,bias };
-	//}
-
-
+	resizeOps = resizeOps.zero();
+	addOps = addOps.zero();
+	maxpoolOps = maxpoolOps.zero();
+	concatOps = concatOps.zero();
+	paddingOps = paddingOps.zero();
 
 	for (int i = 0; i < 100; ++i)
 	{
+
 		int layerId = 1;
 		std::string layerIndex = std::to_string(layerId);
 		// detection model
@@ -182,119 +181,154 @@ int main()
 			layersMap[layerIndex].inChannel, layersMap[layerIndex].outChannel, layersMap[layerIndex].kernel, layersMap[layerIndex].stride, layersMap[layerIndex].padding);
 		layerIndex = std::to_string(++layerId);
 
-		dconv += Convolution2D_Depthwise_k3_s1(inputData, outputData, layersMap[layerIndex].weights.data(), layersMap[layerIndex].bias.data(), inputSize / 2, inputSize / 2,
+		//for (int i = 0; i < 100; ++i)
+		//{
+		//	std::cout << outputData[i] << ", ";
+		//}
+		//std::cout << std::endl << std::endl;
+		//for (int i = 6400; i < 6500; ++i)
+		//{
+		//	std::cout << outputData[i] << ", ";
+		//}
+		//std::cout << std::endl << std::endl;
+
+		dconv += Convolution2D_Depthwise_k3_s1(outputData, inputData, layersMap[layerIndex].weights.data(), layersMap[layerIndex].bias.data(), inputSize / 2, inputSize / 2,
+			layersMap[layerIndex].inChannel, layersMap[layerIndex].outChannel, layersMap[layerIndex].kernel, layersMap[layerIndex].stride, layersMap[layerIndex].padding);
+		layerIndex = std::to_string(++layerId);
+
+		//for (int i = 0; i < 100; ++i)
+		//{
+		//	std::cout << inputData[i] << ", ";
+		//}
+		//std::cout << std::endl << std::endl;
+		//for (int i = 6400; i < 6500; ++i)
+		//{
+		//	std::cout << inputData[i] << ", ";
+		//}
+		//std::cout << std::endl << std::endl;
+
+		pconv += Convolution2D_Pointwise_k1_s1(inputData, outputData, layersMap[layerIndex].weights.data(), layersMap[layerIndex].bias.data(), inputSize / 2, inputSize / 2,
+			layersMap[layerIndex].inChannel, layersMap[layerIndex].outChannel, layersMap[layerIndex].kernel, layersMap[layerIndex].stride, layersMap[layerIndex].padding);
+		layerIndex = std::to_string(++layerId);
+
+		//for (int i = 0; i < 100; ++i)
+		//{
+		//	std::cout << outputData[i] << ", ";
+		//}
+		//std::cout << std::endl << std::endl;
+		//for (int i = 6400; i < 6500; ++i)
+		//{
+		//	std::cout << outputData[i] << ", ";
+		//}
+		//std::cout << std::endl << std::endl;
+
+
+		dconv += Convolution2D_Depthwise_k3_s1(outputData, inputData, layersMap[layerIndex].weights.data(), layersMap[layerIndex].bias.data(), inputSize / 2, inputSize / 2,
 			layersMap[layerIndex].inChannel, layersMap[layerIndex].outChannel, layersMap[layerIndex].kernel, layersMap[layerIndex].stride, layersMap[layerIndex].padding);
 		layerIndex = std::to_string(++layerId);
 		pconv += Convolution2D_Pointwise_k1_s1(inputData, outputData, layersMap[layerIndex].weights.data(), layersMap[layerIndex].bias.data(), inputSize / 2, inputSize / 2,
 			layersMap[layerIndex].inChannel, layersMap[layerIndex].outChannel, layersMap[layerIndex].kernel, layersMap[layerIndex].stride, layersMap[layerIndex].padding);
 		layerIndex = std::to_string(++layerId);
 
-		dconv += Convolution2D_Depthwise_k3_s1(inputData, outputData, layersMap[layerIndex].weights.data(), layersMap[layerIndex].bias.data(), inputSize / 2, inputSize / 2,
-			layersMap[layerIndex].inChannel, layersMap[layerIndex].outChannel, layersMap[layerIndex].kernel, layersMap[layerIndex].stride, layersMap[layerIndex].padding);
-		layerIndex = std::to_string(++layerId);
-		pconv += Convolution2D_Pointwise_k1_s1(inputData, outputData, layersMap[layerIndex].weights.data(), layersMap[layerIndex].bias.data(), inputSize / 2, inputSize / 2,
-			layersMap[layerIndex].inChannel, layersMap[layerIndex].outChannel, layersMap[layerIndex].kernel, layersMap[layerIndex].stride, layersMap[layerIndex].padding);
-		layerIndex = std::to_string(++layerId);
-
-		dconv += Convolution2D_Depthwise_k3_s2(inputData, outputData, layersMap[layerIndex].weights.data(), layersMap[layerIndex].bias.data(), inputSize / 2, inputSize / 2,
+		dconv += Convolution2D_Depthwise_k3_s2(outputData, inputData, layersMap[layerIndex].weights.data(), layersMap[layerIndex].bias.data(), inputSize / 2, inputSize / 2,
 			layersMap[layerIndex].inChannel, layersMap[layerIndex].outChannel, layersMap[layerIndex].kernel, layersMap[layerIndex].stride, layersMap[layerIndex].padding);
 		layerIndex = std::to_string(++layerId);
 		pconv += Convolution2D_Pointwise_k1_s1(inputData, outputData, layersMap[layerIndex].weights.data(), layersMap[layerIndex].bias.data(), inputSize / 4, inputSize / 4,
 			layersMap[layerIndex].inChannel, layersMap[layerIndex].outChannel, layersMap[layerIndex].kernel, layersMap[layerIndex].stride, layersMap[layerIndex].padding);
 		layerIndex = std::to_string(++layerId);
 
-		dconv += Convolution2D_Depthwise_k3_s1(inputData, outputData, layersMap[layerIndex].weights.data(), layersMap[layerIndex].bias.data(), inputSize / 4, inputSize / 4,
+		dconv += Convolution2D_Depthwise_k3_s1(outputData, inputData, layersMap[layerIndex].weights.data(), layersMap[layerIndex].bias.data(), inputSize / 4, inputSize / 4,
 			layersMap[layerIndex].inChannel, layersMap[layerIndex].outChannel, layersMap[layerIndex].kernel, layersMap[layerIndex].stride, layersMap[layerIndex].padding);
 		layerIndex = std::to_string(++layerId);
 		pconv += Convolution2D_Pointwise_k1_s1(inputData, outputData, layersMap[layerIndex].weights.data(), layersMap[layerIndex].bias.data(), inputSize / 4, inputSize / 4,
 			layersMap[layerIndex].inChannel, layersMap[layerIndex].outChannel, layersMap[layerIndex].kernel, layersMap[layerIndex].stride, layersMap[layerIndex].padding);
 		layerIndex = std::to_string(++layerId);
 
-		dconv += Convolution2D_Depthwise_k3_s1(inputData, outputData, layersMap[layerIndex].weights.data(), layersMap[layerIndex].bias.data(), inputSize / 4, inputSize / 4,
+		dconv += Convolution2D_Depthwise_k3_s1(outputData, inputData, layersMap[layerIndex].weights.data(), layersMap[layerIndex].bias.data(), inputSize / 4, inputSize / 4,
 			layersMap[layerIndex].inChannel, layersMap[layerIndex].outChannel, layersMap[layerIndex].kernel, layersMap[layerIndex].stride, layersMap[layerIndex].padding);
 		layerIndex = std::to_string(++layerId);
 		pconv += Convolution2D_Pointwise_k1_s1(inputData, outputData, layersMap[layerIndex].weights.data(), layersMap[layerIndex].bias.data(), inputSize / 4, inputSize / 4,
 			layersMap[layerIndex].inChannel, layersMap[layerIndex].outChannel, layersMap[layerIndex].kernel, layersMap[layerIndex].stride, layersMap[layerIndex].padding);
 		layerIndex = std::to_string(++layerId);
 
-		dconv += Convolution2D_Depthwise_k3_s2(inputData, outputData, layersMap[layerIndex].weights.data(), layersMap[layerIndex].bias.data(), inputSize / 4, inputSize / 4,
+		dconv += Convolution2D_Depthwise_k3_s2(outputData, inputData, layersMap[layerIndex].weights.data(), layersMap[layerIndex].bias.data(), inputSize / 4, inputSize / 4,
 			layersMap[layerIndex].inChannel, layersMap[layerIndex].outChannel, layersMap[layerIndex].kernel, layersMap[layerIndex].stride, layersMap[layerIndex].padding);
 		layerIndex = std::to_string(++layerId);
 		pconv += Convolution2D_Pointwise_k1_s1(inputData, outputData, layersMap[layerIndex].weights.data(), layersMap[layerIndex].bias.data(), inputSize / 8, inputSize / 8,
 			layersMap[layerIndex].inChannel, layersMap[layerIndex].outChannel, layersMap[layerIndex].kernel, layersMap[layerIndex].stride, layersMap[layerIndex].padding);
 		layerIndex = std::to_string(++layerId);
 
-		dconv += Convolution2D_Depthwise_k3_s1(inputData, outputData, layersMap[layerIndex].weights.data(), layersMap[layerIndex].bias.data(), inputSize / 8, inputSize / 8,
+		dconv += Convolution2D_Depthwise_k3_s1(outputData, inputData, layersMap[layerIndex].weights.data(), layersMap[layerIndex].bias.data(), inputSize / 8, inputSize / 8,
 			layersMap[layerIndex].inChannel, layersMap[layerIndex].outChannel, layersMap[layerIndex].kernel, layersMap[layerIndex].stride, layersMap[layerIndex].padding);
 		layerIndex = std::to_string(++layerId);
 		pconv += Convolution2D_Pointwise_k1_s1(inputData, outputData, layersMap[layerIndex].weights.data(), layersMap[layerIndex].bias.data(), inputSize / 8, inputSize / 8,
 			layersMap[layerIndex].inChannel, layersMap[layerIndex].outChannel, layersMap[layerIndex].kernel, layersMap[layerIndex].stride, layersMap[layerIndex].padding);
 		layerIndex = std::to_string(++layerId);
 
-		dconv += Convolution2D_Depthwise_k3_s1(inputData, outputData, layersMap[layerIndex].weights.data(), layersMap[layerIndex].bias.data(), inputSize / 8, inputSize / 8,
+		dconv += Convolution2D_Depthwise_k3_s1(outputData, inputData, layersMap[layerIndex].weights.data(), layersMap[layerIndex].bias.data(), inputSize / 8, inputSize / 8,
 			layersMap[layerIndex].inChannel, layersMap[layerIndex].outChannel, layersMap[layerIndex].kernel, layersMap[layerIndex].stride, layersMap[layerIndex].padding);
 		layerIndex = std::to_string(++layerId);
 		pconv += Convolution2D_Pointwise_k1_s1(inputData, outputData, layersMap[layerIndex].weights.data(), layersMap[layerIndex].bias.data(), inputSize / 8, inputSize / 8,
 			layersMap[layerIndex].inChannel, layersMap[layerIndex].outChannel, layersMap[layerIndex].kernel, layersMap[layerIndex].stride, layersMap[layerIndex].padding);
 		layerIndex = std::to_string(++layerId);
 
-		dconv += Convolution2D_Depthwise_k3_s1(inputData, outputData, layersMap[layerIndex].weights.data(), layersMap[layerIndex].bias.data(), inputSize / 8, inputSize / 8,
+		dconv += Convolution2D_Depthwise_k3_s1(outputData, inputData, layersMap[layerIndex].weights.data(), layersMap[layerIndex].bias.data(), inputSize / 8, inputSize / 8,
 			layersMap[layerIndex].inChannel, layersMap[layerIndex].outChannel, layersMap[layerIndex].kernel, layersMap[layerIndex].stride, layersMap[layerIndex].padding);
 		layerIndex = std::to_string(++layerId);
 		pconv += Convolution2D_Pointwise_k1_s1(inputData, outputData, layersMap[layerIndex].weights.data(), layersMap[layerIndex].bias.data(), inputSize / 8, inputSize / 8,
 			layersMap[layerIndex].inChannel, layersMap[layerIndex].outChannel, layersMap[layerIndex].kernel, layersMap[layerIndex].stride, layersMap[layerIndex].padding);
 		layerIndex = std::to_string(++layerId);
 
-		dconv += Convolution2D_Depthwise_k3_s1(inputData, outputData, layersMap[layerIndex].weights.data(), layersMap[layerIndex].bias.data(), inputSize / 8, inputSize / 8,
+		dconv += Convolution2D_Depthwise_k3_s1(outputData, inputData, layersMap[layerIndex].weights.data(), layersMap[layerIndex].bias.data(), inputSize / 8, inputSize / 8,
 			layersMap[layerIndex].inChannel, layersMap[layerIndex].outChannel, layersMap[layerIndex].kernel, layersMap[layerIndex].stride, layersMap[layerIndex].padding);
 		layerIndex = std::to_string(++layerId);
 		pconv += Convolution2D_Pointwise_k1_s1(inputData, outputData, layersMap[layerIndex].weights.data(), layersMap[layerIndex].bias.data(), inputSize / 8, inputSize / 8,
 			layersMap[layerIndex].inChannel, layersMap[layerIndex].outChannel, layersMap[layerIndex].kernel, layersMap[layerIndex].stride, layersMap[layerIndex].padding);
 		layerIndex = std::to_string(++layerId);
 
-		dconv += Convolution2D_Depthwise_k3_s1(inputData, outputData, layersMap[layerIndex].weights.data(), layersMap[layerIndex].bias.data(), inputSize / 8, inputSize / 8,
+		dconv += Convolution2D_Depthwise_k3_s1(outputData, inputData, layersMap[layerIndex].weights.data(), layersMap[layerIndex].bias.data(), inputSize / 8, inputSize / 8,
 			layersMap[layerIndex].inChannel, layersMap[layerIndex].outChannel, layersMap[layerIndex].kernel, layersMap[layerIndex].stride, layersMap[layerIndex].padding);
 		layerIndex = std::to_string(++layerId);
 		pconv += Convolution2D_Pointwise_k1_s1(inputData, outputData, layersMap[layerIndex].weights.data(), layersMap[layerIndex].bias.data(), inputSize / 8, inputSize / 8,
 			layersMap[layerIndex].inChannel, layersMap[layerIndex].outChannel, layersMap[layerIndex].kernel, layersMap[layerIndex].stride, layersMap[layerIndex].padding);
 		layerIndex = std::to_string(++layerId);
 
-		dconv += Convolution2D_Depthwise_k3_s2(inputData, outputData, layersMap[layerIndex].weights.data(), layersMap[layerIndex].bias.data(), inputSize / 8, inputSize / 8,
+		dconv += Convolution2D_Depthwise_k3_s2(outputData, inputData, layersMap[layerIndex].weights.data(), layersMap[layerIndex].bias.data(), inputSize / 8, inputSize / 8,
 			layersMap[layerIndex].inChannel, layersMap[layerIndex].outChannel, layersMap[layerIndex].kernel, layersMap[layerIndex].stride, layersMap[layerIndex].padding);
 		layerIndex = std::to_string(++layerId);
 		pconv += Convolution2D_Pointwise_k1_s1(inputData, outputData, layersMap[layerIndex].weights.data(), layersMap[layerIndex].bias.data(), inputSize / 16, inputSize / 16,
 			layersMap[layerIndex].inChannel, layersMap[layerIndex].outChannel, layersMap[layerIndex].kernel, layersMap[layerIndex].stride, layersMap[layerIndex].padding);
 		layerIndex = std::to_string(++layerId);
 
-		dconv += Convolution2D_Depthwise_k3_s1(inputData, outputData, layersMap[layerIndex].weights.data(), layersMap[layerIndex].bias.data(), inputSize / 16, inputSize / 16,
+		dconv += Convolution2D_Depthwise_k3_s1(outputData, inputData, layersMap[layerIndex].weights.data(), layersMap[layerIndex].bias.data(), inputSize / 16, inputSize / 16,
 			layersMap[layerIndex].inChannel, layersMap[layerIndex].outChannel, layersMap[layerIndex].kernel, layersMap[layerIndex].stride, layersMap[layerIndex].padding);
 		layerIndex = std::to_string(++layerId);
 		pconv += Convolution2D_Pointwise_k1_s1(inputData, outputData, layersMap[layerIndex].weights.data(), layersMap[layerIndex].bias.data(), inputSize / 16, inputSize / 16,
 			layersMap[layerIndex].inChannel, layersMap[layerIndex].outChannel, layersMap[layerIndex].kernel, layersMap[layerIndex].stride, layersMap[layerIndex].padding);
 		layerIndex = std::to_string(++layerId);
 
-		dconv += Convolution2D_Depthwise_k3_s1(inputData, outputData, layersMap[layerIndex].weights.data(), layersMap[layerIndex].bias.data(), inputSize / 16, inputSize / 16,
+		dconv += Convolution2D_Depthwise_k3_s1(outputData, inputData, layersMap[layerIndex].weights.data(), layersMap[layerIndex].bias.data(), inputSize / 16, inputSize / 16,
 			layersMap[layerIndex].inChannel, layersMap[layerIndex].outChannel, layersMap[layerIndex].kernel, layersMap[layerIndex].stride, layersMap[layerIndex].padding);
 		layerIndex = std::to_string(++layerId);
 		pconv += Convolution2D_Pointwise_k1_s1(inputData, outputData, layersMap[layerIndex].weights.data(), layersMap[layerIndex].bias.data(), inputSize / 16, inputSize / 16,
 			layersMap[layerIndex].inChannel, layersMap[layerIndex].outChannel, layersMap[layerIndex].kernel, layersMap[layerIndex].stride, layersMap[layerIndex].padding);
 		layerIndex = std::to_string(++layerId);
 
-		dconv += Convolution2D_Depthwise_k3_s1(inputData, outputData, layersMap[layerIndex].weights.data(), layersMap[layerIndex].bias.data(), inputSize / 16, inputSize / 16,
+		dconv += Convolution2D_Depthwise_k3_s1(outputData, inputData, layersMap[layerIndex].weights.data(), layersMap[layerIndex].bias.data(), inputSize / 16, inputSize / 16,
 			layersMap[layerIndex].inChannel, layersMap[layerIndex].outChannel, layersMap[layerIndex].kernel, layersMap[layerIndex].stride, layersMap[layerIndex].padding);
 		layerIndex = std::to_string(++layerId);
 		pconv += Convolution2D_Pointwise_k1_s1(inputData, outputData, layersMap[layerIndex].weights.data(), layersMap[layerIndex].bias.data(), inputSize / 16, inputSize / 16,
 			layersMap[layerIndex].inChannel, layersMap[layerIndex].outChannel, layersMap[layerIndex].kernel, layersMap[layerIndex].stride, layersMap[layerIndex].padding);
 		layerIndex = std::to_string(++layerId);
 
-		dconv += Convolution2D_Depthwise_k3_s1(inputData, outputData, layersMap[layerIndex].weights.data(), layersMap[layerIndex].bias.data(), inputSize / 16, inputSize / 16,
+		dconv += Convolution2D_Depthwise_k3_s1(outputData, inputData, layersMap[layerIndex].weights.data(), layersMap[layerIndex].bias.data(), inputSize / 16, inputSize / 16,
 			layersMap[layerIndex].inChannel, layersMap[layerIndex].outChannel, layersMap[layerIndex].kernel, layersMap[layerIndex].stride, layersMap[layerIndex].padding);
 		layerIndex = std::to_string(++layerId);
 		pconv += Convolution2D_Pointwise_k1_s1(inputData, outputData, layersMap[layerIndex].weights.data(), layersMap[layerIndex].bias.data(), inputSize / 16, inputSize / 16,
 			layersMap[layerIndex].inChannel, layersMap[layerIndex].outChannel, layersMap[layerIndex].kernel, layersMap[layerIndex].stride, layersMap[layerIndex].padding);
 		layerIndex = std::to_string(++layerId);
 
-		dconv += Convolution2D_Depthwise_k3_s1(inputData, outputData, layersMap[layerIndex].weights.data(), layersMap[layerIndex].bias.data(), inputSize / 16, inputSize / 16,
+		dconv += Convolution2D_Depthwise_k3_s1(outputData, inputData, layersMap[layerIndex].weights.data(), layersMap[layerIndex].bias.data(), inputSize / 16, inputSize / 16,
 			layersMap[layerIndex].inChannel, layersMap[layerIndex].outChannel, layersMap[layerIndex].kernel, layersMap[layerIndex].stride, layersMap[layerIndex].padding);
 		layerIndex = std::to_string(++layerId);
 		pconv += Convolution2D_Pointwise_k1_s1(inputData, outputData, layersMap[layerIndex].weights.data(), layersMap[layerIndex].bias.data(), inputSize / 16, inputSize / 16,
@@ -317,35 +351,35 @@ int main()
 			layersMap[layerIndex].inChannel, layersMap[layerIndex].outChannel, layersMap[layerIndex].kernel, layersMap[layerIndex].stride, layersMap[layerIndex].padding);
 		layerIndex = std::to_string(++layerId);
 
-		dconv += Convolution2D_Depthwise_k3_s1(inputData, outputData, layersMap[layerIndex].weights.data(), layersMap[layerIndex].bias.data(), inputSize / 16, inputSize / 16,
+		dconv += Convolution2D_Depthwise_k3_s1(outputData, inputData, layersMap[layerIndex].weights.data(), layersMap[layerIndex].bias.data(), inputSize / 16, inputSize / 16,
 			layersMap[layerIndex].inChannel, layersMap[layerIndex].outChannel, layersMap[layerIndex].kernel, layersMap[layerIndex].stride, layersMap[layerIndex].padding);
 		layerIndex = std::to_string(++layerId);
 		pconv += Convolution2D_Pointwise_k1_s1(inputData, outputData, layersMap[layerIndex].weights.data(), layersMap[layerIndex].bias.data(), inputSize / 16, inputSize / 16,
 			layersMap[layerIndex].inChannel, layersMap[layerIndex].outChannel, layersMap[layerIndex].kernel, layersMap[layerIndex].stride, layersMap[layerIndex].padding);
 		layerIndex = std::to_string(++layerId);
 
-		dconv += Convolution2D_Depthwise_k3_s1(inputData, outputData, layersMap[layerIndex].weights.data(), layersMap[layerIndex].bias.data(), inputSize / 8, inputSize / 8,
+		dconv += Convolution2D_Depthwise_k3_s1(outputData, inputData, layersMap[layerIndex].weights.data(), layersMap[layerIndex].bias.data(), inputSize / 8, inputSize / 8,
 			layersMap[layerIndex].inChannel, layersMap[layerIndex].outChannel, layersMap[layerIndex].kernel, layersMap[layerIndex].stride, layersMap[layerIndex].padding);
 		layerIndex = std::to_string(++layerId);
 		pconv += Convolution2D_Pointwise_k1_s1(inputData, outputData, layersMap[layerIndex].weights.data(), layersMap[layerIndex].bias.data(), inputSize / 8, inputSize / 8,
 			layersMap[layerIndex].inChannel, layersMap[layerIndex].outChannel, layersMap[layerIndex].kernel, layersMap[layerIndex].stride, layersMap[layerIndex].padding);
 		layerIndex = std::to_string(++layerId);
 
-		dconv += Convolution2D_Depthwise_k3_s1(inputData, outputData, layersMap[layerIndex].weights.data(), layersMap[layerIndex].bias.data(), inputSize / 4, inputSize / 4,
+		dconv += Convolution2D_Depthwise_k3_s1(outputData, inputData, layersMap[layerIndex].weights.data(), layersMap[layerIndex].bias.data(), inputSize / 4, inputSize / 4,
 			layersMap[layerIndex].inChannel, layersMap[layerIndex].outChannel, layersMap[layerIndex].kernel, layersMap[layerIndex].stride, layersMap[layerIndex].padding);
 		layerIndex = std::to_string(++layerId);
 		pconv += Convolution2D_Pointwise_k1_s1(inputData, outputData, layersMap[layerIndex].weights.data(), layersMap[layerIndex].bias.data(), inputSize / 4, inputSize / 4,
 			layersMap[layerIndex].inChannel, layersMap[layerIndex].outChannel, layersMap[layerIndex].kernel, layersMap[layerIndex].stride, layersMap[layerIndex].padding);
 		layerIndex = std::to_string(++layerId);
 
-		dconv += Convolution2D_Depthwise_k3_s1(inputData, outputData, layersMap[layerIndex].weights.data(), layersMap[layerIndex].bias.data(), inputSize / 4, inputSize / 4,
+		dconv += Convolution2D_Depthwise_k3_s1(outputData, inputData, layersMap[layerIndex].weights.data(), layersMap[layerIndex].bias.data(), inputSize / 4, inputSize / 4,
 			layersMap[layerIndex].inChannel, layersMap[layerIndex].outChannel, layersMap[layerIndex].kernel, layersMap[layerIndex].stride, layersMap[layerIndex].padding);
 		layerIndex = std::to_string(++layerId);
 		pconv += Convolution2D_Pointwise_k1_s1(inputData, outputData, layersMap[layerIndex].weights.data(), layersMap[layerIndex].bias.data(), inputSize / 4, inputSize / 4,
 			layersMap[layerIndex].inChannel, layersMap[layerIndex].outChannel, layersMap[layerIndex].kernel, layersMap[layerIndex].stride, layersMap[layerIndex].padding);
 		layerIndex = std::to_string(++layerId);
 
-		dconv += Convolution2D_Depthwise_k3_s1(inputData, outputData, layersMap[layerIndex].weights.data(), layersMap[layerIndex].bias.data(), inputSize / 4, inputSize / 4,
+		dconv += Convolution2D_Depthwise_k3_s1(outputData, inputData, layersMap[layerIndex].weights.data(), layersMap[layerIndex].bias.data(), inputSize / 4, inputSize / 4,
 			layersMap[layerIndex].inChannel, layersMap[layerIndex].outChannel, layersMap[layerIndex].kernel, layersMap[layerIndex].stride, layersMap[layerIndex].padding);
 		layerIndex = std::to_string(++layerId);
 		pconv += Convolution2D_Pointwise_k1_s1(inputData, outputData, layersMap[layerIndex].weights.data(), layersMap[layerIndex].bias.data(), inputSize / 4, inputSize / 4,
@@ -356,14 +390,14 @@ int main()
 			layersMap[layerIndex].inChannel, layersMap[layerIndex].outChannel, layersMap[layerIndex].kernel, layersMap[layerIndex].stride, layersMap[layerIndex].padding);
 		layerIndex = std::to_string(++layerId); // offset out 
 
-		dconv += Convolution2D_Depthwise_k3_s1(inputData, outputData, layersMap[layerIndex].weights.data(), layersMap[layerIndex].bias.data(), inputSize / 4, inputSize / 4,
+		dconv += Convolution2D_Depthwise_k3_s1(outputData, inputData, layersMap[layerIndex].weights.data(), layersMap[layerIndex].bias.data(), inputSize / 4, inputSize / 4,
 			layersMap[layerIndex].inChannel, layersMap[layerIndex].outChannel, layersMap[layerIndex].kernel, layersMap[layerIndex].stride, layersMap[layerIndex].padding);
 		layerIndex = std::to_string(++layerId);
 		pconv += Convolution2D_Pointwise_k1_s1(inputData, outputData, layersMap[layerIndex].weights.data(), layersMap[layerIndex].bias.data(), inputSize / 4, inputSize / 4,
 			layersMap[layerIndex].inChannel, layersMap[layerIndex].outChannel, layersMap[layerIndex].kernel, layersMap[layerIndex].stride, layersMap[layerIndex].padding);
 		layerIndex = std::to_string(++layerId);
 
-		dconv += Convolution2D_Depthwise_k3_s1(inputData, outputData, layersMap[layerIndex].weights.data(), layersMap[layerIndex].bias.data(), inputSize / 4, inputSize / 4,
+		dconv += Convolution2D_Depthwise_k3_s1(outputData, inputData, layersMap[layerIndex].weights.data(), layersMap[layerIndex].bias.data(), inputSize / 4, inputSize / 4,
 			layersMap[layerIndex].inChannel, layersMap[layerIndex].outChannel, layersMap[layerIndex].kernel, layersMap[layerIndex].stride, layersMap[layerIndex].padding);
 		layerIndex = std::to_string(++layerId);
 		pconv += Convolution2D_Pointwise_k1_s1(inputData, outputData, layersMap[layerIndex].weights.data(), layersMap[layerIndex].bias.data(), inputSize / 4, inputSize / 4,
@@ -374,14 +408,14 @@ int main()
 			layersMap[layerIndex].inChannel, layersMap[layerIndex].outChannel, layersMap[layerIndex].kernel, layersMap[layerIndex].stride, layersMap[layerIndex].padding);
 		layerIndex = std::to_string(++layerId); // size out
 
-		dconv += Convolution2D_Depthwise_k3_s1(inputData, outputData, layersMap[layerIndex].weights.data(), layersMap[layerIndex].bias.data(), inputSize / 4, inputSize / 4,
+		dconv += Convolution2D_Depthwise_k3_s1(outputData, inputData, layersMap[layerIndex].weights.data(), layersMap[layerIndex].bias.data(), inputSize / 4, inputSize / 4,
 			layersMap[layerIndex].inChannel, layersMap[layerIndex].outChannel, layersMap[layerIndex].kernel, layersMap[layerIndex].stride, layersMap[layerIndex].padding);
 		layerIndex = std::to_string(++layerId);
 		pconv += Convolution2D_Pointwise_k1_s1(inputData, outputData, layersMap[layerIndex].weights.data(), layersMap[layerIndex].bias.data(), inputSize / 4, inputSize / 4,
 			layersMap[layerIndex].inChannel, layersMap[layerIndex].outChannel, layersMap[layerIndex].kernel, layersMap[layerIndex].stride, layersMap[layerIndex].padding);
 		layerIndex = std::to_string(++layerId);
 
-		dconv += Convolution2D_Depthwise_k3_s1(inputData, outputData, layersMap[layerIndex].weights.data(), layersMap[layerIndex].bias.data(), inputSize / 4, inputSize / 4,
+		dconv += Convolution2D_Depthwise_k3_s1(outputData, inputData, layersMap[layerIndex].weights.data(), layersMap[layerIndex].bias.data(), inputSize / 4, inputSize / 4,
 			layersMap[layerIndex].inChannel, layersMap[layerIndex].outChannel, layersMap[layerIndex].kernel, layersMap[layerIndex].stride, layersMap[layerIndex].padding);
 		layerIndex = std::to_string(++layerId);
 		pconv += Convolution2D_Pointwise_k1_s1(inputData, outputData, layersMap[layerIndex].weights.data(), layersMap[layerIndex].bias.data(), inputSize / 4, inputSize / 4,
@@ -391,6 +425,70 @@ int main()
 		pconv += Convolution2D_Pointwise_k1_s1(inputData, outputData, layersMap[layerIndex].weights.data(), layersMap[layerIndex].bias.data(), inputSize / 4, inputSize / 4,
 			layersMap[layerIndex].inChannel, layersMap[layerIndex].outChannel, layersMap[layerIndex].kernel, layersMap[layerIndex].stride, layersMap[layerIndex].padding);
 		layerIndex = std::to_string(++layerId); // keypoint out
+
+
+
+
+		resizeOps += Resize(inputData, outputData, inputSize / 4, inputSize / 4, 40, 2.0);
+		resizeOps += Resize(inputData, outputData, inputSize / 8, inputSize / 8, 40, 2.0);
+		resizeOps += Resize(inputData, outputData, inputSize / 16, inputSize / 16, 40, 2.0);
+
+		addOps += Add(inputData, outputData, inputSize / 2, inputSize / 2, 24);
+		addOps += Add(inputData, outputData, inputSize / 2, inputSize / 2, 24);
+		addOps += Add(inputData, outputData, inputSize / 2, inputSize / 2, 24);
+		addOps += Add(inputData, outputData, inputSize / 2, inputSize / 2, 24);
+		addOps += Add(inputData, outputData, inputSize / 2, inputSize / 2, 24);
+		addOps += Add(inputData, outputData, inputSize / 2, inputSize / 2, 24);
+		addOps += Add(inputData, outputData, inputSize / 2, inputSize / 2, 24);
+		addOps += Add(inputData, outputData, inputSize / 2, inputSize / 2, 24);
+		addOps += Add(inputData, outputData, inputSize / 2, inputSize / 2, 24);
+		addOps += Add(inputData, outputData, inputSize / 2, inputSize / 2, 24);
+		addOps += Add(inputData, outputData, inputSize / 2, inputSize / 2, 24);
+		addOps += Add(inputData, outputData, inputSize / 2, inputSize / 2, 24);
+		addOps += Add(inputData, outputData, inputSize / 2, inputSize / 2, 24);
+		addOps += Add(inputData, outputData, inputSize / 2, inputSize / 2, 24);
+
+		maxpoolOps += MaxPool(inputData, outputData, inputSize / 2, inputSize / 2, 24, 2, 2, 0);
+		maxpoolOps += MaxPool(inputData, outputData, inputSize / 2, inputSize / 2, 24, 2, 2, 0);
+		maxpoolOps += MaxPool(inputData, outputData, inputSize / 2, inputSize / 2, 24, 2, 2, 0);
+		maxpoolOps += MaxPool(inputData, outputData, inputSize / 2, inputSize / 2, 24, 2, 2, 0);
+
+		concatOps += ZeroConcat(inputData, outputData, inputSize / 2, inputSize / 2, 24);
+		concatOps += ZeroConcat(inputData, outputData, inputSize / 2, inputSize / 2, 24);
+
+		paddingOps += ZeroPadding(inputData, outputData, inputSize / 2, inputSize / 2, 24, 1);
+		paddingOps += ZeroPadding(inputData, outputData, inputSize / 2, inputSize / 2, 24, 1);
+		paddingOps += ZeroPadding(inputData, outputData, inputSize / 2, inputSize / 2, 24, 1);
+		paddingOps += ZeroPadding(inputData, outputData, inputSize / 2, inputSize / 2, 24, 1);
+
+		paddingOps += ZeroPadding(inputData, outputData, inputSize / 4, inputSize / 4, 48, 1);
+		paddingOps += ZeroPadding(inputData, outputData, inputSize / 4, inputSize / 4, 48, 1);
+		paddingOps += ZeroPadding(inputData, outputData, inputSize / 4, inputSize / 4, 48, 1);
+
+		paddingOps += ZeroPadding(inputData, outputData, inputSize / 8, inputSize / 8, 96, 1);
+		paddingOps += ZeroPadding(inputData, outputData, inputSize / 8, inputSize / 8, 96, 1);
+		paddingOps += ZeroPadding(inputData, outputData, inputSize / 8, inputSize / 8, 96, 1);
+		paddingOps += ZeroPadding(inputData, outputData, inputSize / 8, inputSize / 8, 96, 1);
+		paddingOps += ZeroPadding(inputData, outputData, inputSize / 8, inputSize / 8, 96, 1);
+		paddingOps += ZeroPadding(inputData, outputData, inputSize / 8, inputSize / 8, 96, 1);
+
+		paddingOps += ZeroPadding(inputData, outputData, inputSize / 16, inputSize / 16, 96, 1);
+		paddingOps += ZeroPadding(inputData, outputData, inputSize / 16, inputSize / 16, 96, 1);
+		paddingOps += ZeroPadding(inputData, outputData, inputSize / 16, inputSize / 16, 96, 1);
+		paddingOps += ZeroPadding(inputData, outputData, inputSize / 16, inputSize / 16, 96, 1);
+		paddingOps += ZeroPadding(inputData, outputData, inputSize / 16, inputSize / 16, 96, 1);
+		paddingOps += ZeroPadding(inputData, outputData, inputSize / 16, inputSize / 16, 96, 1);
+
+		paddingOps += ZeroPadding(inputData, outputData, inputSize / 8, inputSize / 8, 40, 1);
+		paddingOps += ZeroPadding(inputData, outputData, inputSize / 4, inputSize / 4, 40, 1);
+
+		paddingOps += ZeroPadding(inputData, outputData, inputSize / 4, inputSize / 4, 40, 1);
+		paddingOps += ZeroPadding(inputData, outputData, inputSize / 4, inputSize / 4, 40, 1);
+		paddingOps += ZeroPadding(inputData, outputData, inputSize / 4, inputSize / 4, 40, 1);
+		paddingOps += ZeroPadding(inputData, outputData, inputSize / 4, inputSize / 4, 40, 1);
+		paddingOps += ZeroPadding(inputData, outputData, inputSize / 4, inputSize / 4, 40, 1);
+		paddingOps += ZeroPadding(inputData, outputData, inputSize / 4, inputSize / 4, 40, 1);
+
 
 		endTime = std::chrono::system_clock::now();
 		milli = std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime);
@@ -404,6 +502,12 @@ int main()
 	std::cout << "detection nconv average : " << nconv.count() / 100 << " us ... " << nconv.count() / 100 / 1000 << " ms" << std::endl;
 	std::cout << "detection dconv average : " << dconv.count() / 100 << " us ... " << dconv.count() / 100 / 1000 << " ms" << std::endl;
 	std::cout << "detection pconv average : " << pconv.count() / 100 << " us ... " << pconv.count() / 100 / 1000 << " ms" << std::endl;
+
+	std::cout << "detection resize ops average : " << resizeOps.count() / 100 << " us ... " << resizeOps.count() / 100 / 1000 << " ms" << std::endl;
+	std::cout << "detection add ops average : " << addOps.count() / 100 << " us ... " << addOps.count() / 100 / 1000 << " ms" << std::endl;
+	std::cout << "detection maxpool ops average : " << maxpoolOps.count() / 100 << " us ... " << maxpoolOps.count() / 100 / 1000 << " ms" << std::endl;
+	std::cout << "detection concat ops average : " << concatOps.count() / 100 << " us ... " << concatOps.count() / 100 / 1000 << " ms" << std::endl;
+	std::cout << "detection padding ops average : " << paddingOps.count() / 100 << " us ... " << paddingOps.count() / 100 / 1000 << " ms" << std::endl;
 
 
 	// classification model
