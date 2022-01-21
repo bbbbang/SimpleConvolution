@@ -1,0 +1,652 @@
+#pragma once
+#include "ops.h"
+#include "utils.h"
+#include <iostream>
+
+
+void Convolution2D_k3_s1(Tensor* inputData, Tensor* outputData, float* weight, float* bias, int inChannel, int outChannel, int kernel, int stride, int padding);
+
+void Convolution2D_k3_s2(Tensor* inputData, Tensor* outputData, float* weight, float* bias, int inChannel, int outChannel, int kernel, int stride, int padding);
+
+void Convolution2D_Depthwise_k3_s1(Tensor* inputData, Tensor* outputData, float* weight, float* bias, int inChannel, int outChannel, int kernel, int stride, int padding);
+
+void Convolution2D_Depthwise_k3_s2(Tensor* inputData, Tensor* outputData, float* weight, float* bias, int inChannel, int outChannel, int kernel, int stride, int padding);
+
+void Convolution2D_Pointwise_k1_s1(Tensor* inputData, Tensor* outputData, float* weight, float* bias, int inChannel, int outChannel, int kernel, int stride, int padding);
+
+
+void Convolution2D_k3_s1(Tensor* inputData, Tensor* outputData, float* weight, float* bias, int inChannel, int outChannel, int kernel, int stride, int padding)
+{
+
+}
+
+void Convolution2D_k3_s2(Tensor* inputData, Tensor* outputData, float* weight, float* bias, int inChannel, int outChannel, int kernel, int stride, int padding)
+{
+	int height = inputData->height;
+	int width = inputData->width;
+	int channel = inputData->channel;
+	int area = height * width;
+	float* data = inputData->data;
+
+	float* tempData = new float[area * channel];
+	memcpy(tempData, data, sizeof(float) * area * channel);
+
+	int padHeight = height + padding * 2;
+	int padWidth = width + padding * 2;
+	int padArea = padWidth * padHeight;
+
+	int outputHeight = (padHeight - kernel) / stride + 1;
+	int outputWidth = (padWidth - kernel) / stride + 1;
+	int outputArea = outputHeight * outputWidth;
+
+	if (padding > 0)
+	{
+		// padding
+		ZeroPadding(inputData, padding);
+	}
+
+	int kernelSize = inChannel * 9;
+
+	T val_1, val_2, val_3, val_4, val_5, val_6;
+
+	T* tempInputData1 = padInput;
+	T* tempInputData2 = padInput + padWidth;
+	T* tempInputData3 = padInput + padWidth + padWidth;
+	T* tempOutputData = outputData;
+
+	for (int outCh = 0; outCh < outChannel; ++outCh)
+	{
+		int outKernel = outCh * kernelSize;
+		for (int inCh = 0; inCh < inChannel; ++inCh)
+		{
+			int kernelIndex = outKernel + inCh * 9;
+
+			T weightVal_1 = weight[kernelIndex + 0], weightVal_2 = weight[kernelIndex + 1], weightVal_3 = weight[kernelIndex + 2];
+			T weightVal_4 = weight[kernelIndex + 3], weightVal_5 = weight[kernelIndex + 4], weightVal_6 = weight[kernelIndex + 5];
+			T weightVal_7 = weight[kernelIndex + 6], weightVal_8 = weight[kernelIndex + 7], weightVal_9 = weight[kernelIndex + 8];
+
+			for (int row = 0; row < height; row += stride)
+			{
+				for (int col = 0; col < width; col += stride)
+				{
+					T val = *outputData;
+
+					T val1 = *(tempInputData1);
+					T val2 = *(tempInputData1 + 1);
+					T val3 = *(tempInputData1 + 2);
+
+					T val4 = *(tempInputData2);
+					T val5 = *(tempInputData2 + 1);
+					T val6 = *(tempInputData2 + 2);
+
+					T val7 = *(tempInputData3);
+					T val8 = *(tempInputData3 + 1);
+					T val9 = *(tempInputData3 + 2);
+
+					val = val + val1 * weightVal_1 + val2 * weightVal_2 + val3 * weightVal_3 +
+						val4 * weightVal_4 + val5 * weightVal_5 + val6 * weightVal_6 +
+						val7 * weightVal_7 + val8 * weightVal_8 + val9 * weightVal_9;
+					*outputData = val;
+
+					tempInputData1 += stride;
+					tempInputData2 += stride;
+					tempInputData3 += stride;
+					++outputData;
+				}
+				tempInputData1 += padWidth + 2;
+				tempInputData2 += padWidth + 2;
+				tempInputData3 += padWidth + 2;
+			}
+			tempInputData1 += padWidth * 2;
+			tempInputData2 += padWidth * 2;
+			tempInputData3 += padWidth * 2;
+			outputData -= outputArea;
+		}
+		for (int i = 0; i < outputArea; ++i)
+		{
+			T val = *outputData + *bias;
+			val = (val < 0) ? 0 : val;
+			*outputData = val;
+			++outputData;
+		}
+		++bias;
+		tempInputData1 = padInput;
+		tempInputData2 = padInput + padWidth;
+		tempInputData3 = padInput + padWidth + padWidth;
+	}
+
+
+
+
+
+
+
+
+
+
+	delete[] tempData;
+}
+
+void Convolution2D_Depthwise_k3_s1(Tensor* inputData, Tensor* outputData, float* weight, float* bias, int inChannel, int outChannel, int kernel, int stride, int padding)
+{
+
+}
+
+void Convolution2D_Depthwise_k3_s2(Tensor* inputData, Tensor* outputData, float* weight, float* bias, int inChannel, int outChannel, int kernel, int stride, int padding)
+{
+
+}
+
+void Convolution2D_Pointwise_k1_s1(Tensor* inputData, Tensor* outputData, float* weight, float* bias, int inChannel, int outChannel, int kernel, int stride, int padding)
+{
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+template <typename T>
+void Convolution2D_k3_s1(T* inputData, T* outputData, T* weight, T* bias,
+	int height, int width, int inChannel, int outChannel,
+	int kernel, int stride, int padding);
+
+template <typename T>
+void Convolution2D_k3_s2(T* inputData, T* outputData, T* weight, T* bias,
+	int height, int width, int inChannel, int outChannel,
+	int kernel, int stride, int padding);
+
+
+
+
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////// normal convolution ///////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////
+
+template <typename T>
+std::chrono::microseconds Convolution2D_k3_s1(T* inputData, T* outputData, T* weight, T* bias,
+	int height, int width, int inChannel, int outChannel,
+	int kernel, int stride, int padding);
+
+template <typename T>
+std::chrono::microseconds Convolution2D_k3_s2(T* inputData, T* outputData, T* weight, T* bias,
+	int height, int width, int inChannel, int outChannel,
+	int kernel, int stride, int padding);
+
+
+// yet no need to implement
+template <typename T>
+std::chrono::microseconds Convolution2D_k3_s1(T* inputData, T* outputData, T* weight, T* bias,
+	int height, int width, int inChannel, int outChannel,
+	int kernel, int stride, int padding)
+{
+	std::chrono::system_clock::time_point startTime = std::chrono::system_clock::now();
+	std::chrono::system_clock::time_point endTime = std::chrono::system_clock::now();
+	return std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime);
+}
+
+
+
+
+template <typename T>
+std::chrono::microseconds Convolution2D_k3_s2(T* inputData, T* outputData, T* weight, T* bias,
+	int height, int width, int inChannel, int outChannel,
+	int kernel, int stride, int padding)
+{
+	std::chrono::system_clock::time_point startTime = std::chrono::system_clock::now();
+
+	int area = height * width;
+
+	int padHeight = height + padding * 2;
+	int padWidth = width + padding * 2;
+	int padArea = padWidth * padHeight;
+
+	int outputHeight = (padHeight - kernel) / stride + 1;
+	int outputWidth = (padWidth - kernel) / stride + 1;
+	int outputArea = outputHeight * outputWidth;
+
+	#pragma region padding
+
+	// make padding tensor
+	float* padInput = new float[inChannel * padHeight * padWidth];
+	for (int i = 0; i < inChannel * padHeight * padWidth; ++i)
+	{
+		padInput[i] = 0;
+	}
+
+	ZeroPadding(inputData, padInput, height, width, inChannel, padding);
+
+	//for (int i = 0; i < padHeight; ++i)
+	//{
+	//	for (int j = 0; j < padWidth; ++j)
+	//	{
+	//		if (j < 5 || j > padWidth - 6)
+	//			std::cout << padInput[i * padWidth + j] << ", ";
+	//	}
+	//	std::cout << std::endl;
+	//}
+
+	#pragma endregion
+
+	int kernelSize = inChannel * 9;
+
+	T val_1, val_2, val_3, val_4, val_5, val_6;
+
+	T* tempInputData1 = padInput;
+	T* tempInputData2 = padInput + padWidth;
+	T* tempInputData3 = padInput + padWidth + padWidth;
+	T* tempOutputData = outputData;
+
+	for (int outCh = 0; outCh < outChannel; ++outCh)
+	{
+		int outKernel = outCh * kernelSize;
+		for (int inCh = 0; inCh < inChannel; ++inCh)
+		{
+			int kernelIndex = outKernel + inCh * 9;
+
+			T weightVal_1 = weight[kernelIndex + 0], weightVal_2 = weight[kernelIndex + 1], weightVal_3 = weight[kernelIndex + 2];
+			T weightVal_4 = weight[kernelIndex + 3], weightVal_5 = weight[kernelIndex + 4], weightVal_6 = weight[kernelIndex + 5];
+			T weightVal_7 = weight[kernelIndex + 6], weightVal_8 = weight[kernelIndex + 7], weightVal_9 = weight[kernelIndex + 8];
+
+			for (int row = 0; row < height; row += stride)
+			{
+				for (int col = 0; col < width; col += stride)
+				{
+					T val = *outputData;
+
+					T val1 = *(tempInputData1);
+					T val2 = *(tempInputData1 + 1);
+					T val3 = *(tempInputData1 + 2);
+
+					T val4 = *(tempInputData2);
+					T val5 = *(tempInputData2 + 1);
+					T val6 = *(tempInputData2 + 2);
+
+					T val7 = *(tempInputData3);
+					T val8 = *(tempInputData3 + 1);
+					T val9 = *(tempInputData3 + 2);
+
+					val = val + val1 * weightVal_1 + val2 * weightVal_2 + val3 * weightVal_3 +
+						val4 * weightVal_4 + val5 * weightVal_5 + val6 * weightVal_6 +
+						val7 * weightVal_7 + val8 * weightVal_8 + val9 * weightVal_9;
+					*outputData = val;
+
+					tempInputData1 += stride;
+					tempInputData2 += stride;
+					tempInputData3 += stride;
+					++outputData;
+				}
+				tempInputData1 += padWidth+2;
+				tempInputData2 += padWidth+2;
+				tempInputData3 += padWidth+2;
+			}
+			tempInputData1 += padWidth*2 ;
+			tempInputData2 += padWidth*2 ;
+			tempInputData3 += padWidth*2 ;
+			outputData -= outputArea;
+		}
+		for (int i = 0; i < outputArea; ++i)
+		{
+			T val = *outputData + *bias;
+			val = (val < 0) ? 0 : val;
+			*outputData = val;
+			++outputData;
+		}
+		++bias;
+		tempInputData1 = padInput;
+		tempInputData2 = padInput + padWidth;
+		tempInputData3 = padInput + padWidth + padWidth;
+	}
+	delete[]padInput;
+
+	std::chrono::system_clock::time_point endTime = std::chrono::system_clock::now();
+	return std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime);
+}
+
+
+
+
+
+
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////// depthwise convolution /////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////
+
+template <typename T>
+std::chrono::microseconds Convolution2D_Depthwise_k3_s1(T* inputData, T* outputData, T* weight, T* bias,
+	int height, int width, int inChannel, int outChannel,
+	int kernel, int stride, int padding);
+
+template <typename T>
+std::chrono::microseconds Convolution2D_Depthwise_k3_s2(T* inputData, T* outputData, T* weight, T* bias,
+	int height, int width, int inChannel, int outChannel,
+	int kernel, int stride, int padding);
+
+
+
+//// plain
+
+template <typename T>
+std::chrono::microseconds Convolution2D_Depthwise_k3_s1(T* inputData, T* outputData, T* weight, T* bias,
+														int height, int width, int inChannel, int outChannel,
+														int kernel, int stride, int padding)
+{
+	std::chrono::system_clock::time_point startTime = std::chrono::system_clock::now();
+
+	int area = height * width;
+
+	int padHeight = height + padding * 2;
+	int padWidth = width + padding * 2;
+	int padArea = padWidth * padHeight;
+
+	int outputHeight = (padHeight - kernel) + 1;
+	int outputWidth = (padWidth - kernel) + 1;
+	int outputArea = outputHeight * outputWidth;
+
+	// padding
+	float* padInput = new float[inChannel * padArea];
+	for (int i = 0; i < inChannel * padArea; ++i)
+	{
+		padInput[i] = 0;
+		outputData[i] = 0;
+	}
+
+	ZeroPadding(inputData, padInput, height, width, inChannel, padding);
+
+	T val_1, val_2, val_3, val_4, val_5, val_6;
+
+	T* tempInputData1 = padInput;
+	T* tempInputData2 = padInput + padWidth;
+	T* tempInputData3 = padInput + padWidth + padWidth;
+	T* tempOutputData = outputData;
+
+	for (int inCh = 0; inCh < inChannel; ++inCh)
+	{
+		int kernelIndex = inCh * 9;
+
+		T weightVal_1 = weight[kernelIndex + 0], weightVal_2 = weight[kernelIndex + 1], weightVal_3 = weight[kernelIndex + 2];
+		T weightVal_4 = weight[kernelIndex + 3], weightVal_5 = weight[kernelIndex + 4], weightVal_6 = weight[kernelIndex + 5];
+		T weightVal_7 = weight[kernelIndex + 6], weightVal_8 = weight[kernelIndex + 7], weightVal_9 = weight[kernelIndex + 8];
+
+		for (int row = 0; row < height; ++row)
+		{
+			for (int col = 0; col < width; ++col)
+			{
+				T val = *outputData;
+
+				T val1 = *(tempInputData1);
+				T val2 = *(tempInputData1 + 1);
+				T val3 = *(tempInputData1 + 2);
+
+				T val4 = *(tempInputData2);
+				T val5 = *(tempInputData2 + 1);
+				T val6 = *(tempInputData2 + 2);
+
+				T val7 = *(tempInputData3);
+				T val8 = *(tempInputData3 + 1);
+				T val9 = *(tempInputData3 + 2);
+
+				val = val + val1 * weightVal_1 + val2 * weightVal_2 + val3 * weightVal_3 +
+					val4 * weightVal_4 + val5 * weightVal_5 + val6 * weightVal_6 +
+					val7 * weightVal_7 + val8 * weightVal_8 + val9 * weightVal_9;
+				*outputData = val;
+
+				++tempInputData1;
+				++tempInputData2;
+				++tempInputData3;
+				++outputData;
+			}
+			tempInputData1 += 2;
+			tempInputData2 += 2;
+			tempInputData3 += 2;
+		}
+		tempInputData1 += padWidth*2;
+		tempInputData2 += padWidth*2;
+		tempInputData3 += padWidth*2;
+		
+		outputData = tempOutputData;
+		for (int i = 0; i < area; ++i)
+		{
+			T val = *outputData + *bias;
+			//val = (val < 0) ? 0 : val;
+			*outputData = val;
+
+			++outputData;
+		}
+		++bias;
+		tempOutputData = outputData;
+	}
+	delete[]padInput;
+
+	std::chrono::system_clock::time_point endTime = std::chrono::system_clock::now();
+	return std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime);
+}
+
+
+
+
+template <typename T>
+std::chrono::microseconds Convolution2D_Depthwise_k3_s2(T* inputData, T* outputData, T* weight, T* bias,
+	int height, int width, int inChannel, int outChannel,
+	int kernel, int stride, int padding)
+{
+	std::chrono::system_clock::time_point startTime = std::chrono::system_clock::now();
+
+	int area = height * width;
+
+	int padHeight = height + padding * 2;
+	int padWidth = width + padding * 2;
+	int padArea = padWidth * padHeight;
+
+	int outputHeight = (padHeight - kernel) / stride + 1;
+	int outputWidth = (padWidth - kernel) / stride + 1;
+	int outputArea = outputHeight * outputWidth;
+
+	// padding
+	float* padInput = new float[inChannel * padArea];
+	for (int i = 0; i < inChannel * padArea; ++i)
+	{
+		padInput[i] = 0;
+	}
+
+	ZeroPadding(inputData, padInput, height, width, inChannel, padding);
+
+	T val_1, val_2, val_3, val_4, val_5, val_6;
+
+	T* tempInputData1 = padInput;
+	T* tempInputData2 = padInput + padWidth;
+	T* tempInputData3 = padInput + padWidth + padWidth;
+	T* tempOutputData = outputData;
+
+	for (int inCh = 0; inCh < inChannel; ++inCh)
+	{
+		int kernelIndex = inCh * 9;
+
+		T weightVal_1 = weight[kernelIndex + 0], weightVal_2 = weight[kernelIndex + 1], weightVal_3 = weight[kernelIndex + 2];
+		T weightVal_4 = weight[kernelIndex + 3], weightVal_5 = weight[kernelIndex + 4], weightVal_6 = weight[kernelIndex + 5];
+		T weightVal_7 = weight[kernelIndex + 6], weightVal_8 = weight[kernelIndex + 7], weightVal_9 = weight[kernelIndex + 8];
+
+		for (int row = 0; row < height; row+=stride)
+		{
+			for (int col = 0; col < width; col+=stride)
+			{
+				T val = *outputData;
+
+				T val1 = *(tempInputData1);
+				T val2 = *(tempInputData1 + 1);
+				T val3 = *(tempInputData1 + 2);
+
+				T val4 = *(tempInputData2);
+				T val5 = *(tempInputData2 + 1);
+				T val6 = *(tempInputData2 + 2);
+
+				T val7 = *(tempInputData3);
+				T val8 = *(tempInputData3 + 1);
+				T val9 = *(tempInputData3 + 2);
+
+				val = val + val1 * weightVal_1 + val2 * weightVal_2 + val3 * weightVal_3 +
+					val4 * weightVal_4 + val5 * weightVal_5 + val6 * weightVal_6 +
+					val7 * weightVal_7 + val8 * weightVal_8 + val9 * weightVal_9;
+				*outputData = val;
+				tempInputData1 += stride;
+				tempInputData2 += stride;
+				tempInputData3 += stride;
+				++outputData;
+			}
+			tempInputData1 += padWidth + 1;
+			tempInputData2 += padWidth + 1;
+			tempInputData3 += padWidth + 1;
+		}
+		tempInputData1 += padWidth + 1;
+		tempInputData2 += padWidth + 1;
+		tempInputData3 += padWidth + 1;
+
+		outputData = tempOutputData;
+		for (int i = 0; i < area; ++i)
+		{
+			T val = *outputData + *bias;
+			val = (val < 0) ? 0 : val;
+			*outputData = val;
+
+			++outputData;
+		}
+		++bias;
+		tempOutputData = outputData;
+	}
+	delete[]padInput;
+	//std::cout << "depthwise : " << count << std::endl;
+
+	std::chrono::system_clock::time_point endTime = std::chrono::system_clock::now();
+	return std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime);
+}
+
+
+
+
+
+
+
+
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////// pointwise convolution /////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////
+
+template <typename T>
+std::chrono::microseconds Convolution2D_Pointwise_k1_s1(T* inputData, T* outputData, T* weight, T* bias,
+	int height, int width, int inChannel, int outChannel,
+	int kernel, int stride, int padding);
+
+// yet no need to implement
+template <typename T>
+std::chrono::microseconds Convolution2D_Pointwise_k1_s2(T* inputData, T* outputData, T* weight, T* bias,
+	int height, int width, int inChannel, int outChannel,
+	int kernel, int stride, int padding);
+
+
+
+
+template <typename T>
+std::chrono::microseconds Transpose(T* inputData, T* outputData, int height, int width, int channel);
+
+template <typename T>
+std::chrono::microseconds Transpose(T* inputData, T* outputData, int height, int width, int channel)
+{
+	
+}
+
+
+
+template <typename T>
+std::chrono::microseconds Convolution2D_Pointwise_k1_s1(T* inputData, T* outputData, T* weight, T* bias,
+	int height, int width, int inChannel, int outChannel,
+	int kernel, int stride, int padding)
+{
+	std::chrono::system_clock::time_point startTime = std::chrono::system_clock::now();
+
+	int area = height * width;
+	for (int i = 0; i < inChannel * area; ++i)
+	{
+		outputData[i] = 0;
+	}
+
+	for (int outCh = 0; outCh < outChannel; ++outCh)
+	{
+		for (int inCh = 0; inCh < inChannel; ++inCh)
+		{
+			T weightVal = *weight;
+			int inPos = inCh * area;
+			
+			for (int i = 0; i < area; ++i)
+			{
+				T o = *outputData;
+				o = o + inputData[inPos + i] * weightVal;
+				(*outputData) = o;
+				++outputData;
+			}
+			++weight;
+			outputData -= area;
+		}
+
+		for (int i = 0; i < area; ++i)
+		{
+			T val = *outputData + *bias;
+			//val = (val < 0) ? 0 : val;
+			*outputData = val;
+			++outputData;
+		}
+		++bias;
+	}
+	std::chrono::system_clock::time_point endTime = std::chrono::system_clock::now();
+	return std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime);
+}
+
+
+
+
+// yet no need to implement
+template <typename T>
+std::chrono::microseconds Convolution2D_Pointwise_k1_s2(T* inputData, T* outputData, T* weight, T* bias,
+	int height, int width, int inChannel, int outChannel,
+	int kernel, int stride, int padding)
+{
+	std::chrono::system_clock::time_point startTime = std::chrono::system_clock::now();
+	std::chrono::system_clock::time_point endTime = std::chrono::system_clock::now();
+	return std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime);
+}
