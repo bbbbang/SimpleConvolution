@@ -6,7 +6,8 @@
 #include <cmath>
 #include <iostream>
 #include <algorithm>
-
+#include <queue>
+#include <vector>
 
 
 std::chrono::microseconds _Relu(Tensor* inputData);
@@ -139,10 +140,13 @@ std::chrono::microseconds _MaxPool(Tensor* inputData, int kernel, int stride, in
 	int outputHeight = (padHeight - kernel) / stride + 1;
 	int outputWidth = (padWidth - kernel) / stride + 1;
 
+	// padding
+	_ZeroPadding(inputData, padding);
+
 	float* data = inputData->data;
 	float* tempData = new float[area * channel];
 	memcpy(tempData, data, sizeof(float) * area * channel);
-	memset(data, 0, sizeof(float) * area * channel);
+	//memset(data, 0, sizeof(float) * area * channel);
 	float* saveTempPos = tempData;
 	float* saveDataPos = data;
 
@@ -256,6 +260,26 @@ std::chrono::microseconds _Concat(Tensor* inputData, Tensor* outputData)
 	}
 
 	inputData->channel = inputData->channel * 2;
+
+	std::chrono::system_clock::time_point endTime = std::chrono::system_clock::now();
+	return std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime);
+}
+
+
+
+std::chrono::microseconds _Sigmoid(Tensor* tensor);
+
+std::chrono::microseconds _Sigmoid(Tensor* tensor)
+{
+	std::chrono::system_clock::time_point startTime = std::chrono::system_clock::now();
+
+	float* data = tensor->data;
+	int size = tensor->height * tensor->width * tensor->channel;
+
+	for (int i = 0; i < size; ++i)
+	{
+		data[i] = 1 / (1 + std::exp(-data[i]));
+	}
 
 	std::chrono::system_clock::time_point endTime = std::chrono::system_clock::now();
 	return std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime);
