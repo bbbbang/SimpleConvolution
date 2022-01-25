@@ -17,7 +17,7 @@ std::chrono::microseconds _Convolution2D_Depthwise_k3_s2(Tensor* tensor, float* 
 std::chrono::microseconds _Convolution2D_Pointwise_k1_s1(Tensor* tensor, float* weight, float* bias, int inChannel, int outChannel, int kernel, int stride, int padding);
 
 
-std::chrono::microseconds _Convolution2D_k3_s1(Tensor* tensor, float* weight, float* bias, int inChannel, int outChannel, int kernel, int stride, int padding)
+std::chrono::microseconds _Convolution2D_k3_s1(Tensor* tensor, float* weight, float* bias, int inChannel, int outChannel, int kernel=3, int stride=1, int padding=1)
 {
 	std::chrono::system_clock::time_point startTime = std::chrono::system_clock::now();
 
@@ -25,7 +25,7 @@ std::chrono::microseconds _Convolution2D_k3_s1(Tensor* tensor, float* weight, fl
 	return std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime);
 }
 
-std::chrono::microseconds _Convolution2D_k3_s2(Tensor* tensor, float* weight, float* bias, int inChannel, int outChannel, int kernel, int stride, int padding)
+std::chrono::microseconds _Convolution2D_k3_s2(Tensor* tensor, float* weight, float* bias, int inChannel, int outChannel, int kernel=3, int stride=2, int padding=1)
 {
 	std::chrono::system_clock::time_point startTime = std::chrono::system_clock::now();
 
@@ -134,7 +134,7 @@ std::chrono::microseconds _Convolution2D_k3_s2(Tensor* tensor, float* weight, fl
 	return std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime);
 }
 
-std::chrono::microseconds _Convolution2D_Depthwise_k3_s1(Tensor* tensor, float* weight, float* bias, int inChannel, int outChannel, int kernel, int stride, int padding)
+std::chrono::microseconds _Convolution2D_Depthwise_k3_s1(Tensor* tensor, float* weight, float* bias, int inChannel, int outChannel, int kernel=3, int stride=1, int padding=1)
 {
 	std::chrono::system_clock::time_point startTime = std::chrono::system_clock::now();
 
@@ -233,7 +233,7 @@ std::chrono::microseconds _Convolution2D_Depthwise_k3_s1(Tensor* tensor, float* 
 	return std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime);
 }
 
-std::chrono::microseconds _Convolution2D_Depthwise_k3_s2(Tensor* tensor, float* weight, float* bias, int inChannel, int outChannel, int kernel, int stride, int padding)
+std::chrono::microseconds _Convolution2D_Depthwise_k3_s2(Tensor* tensor, float* weight, float* bias, int inChannel, int outChannel, int kernel=3, int stride=2, int padding=1)
 {
 	std::chrono::system_clock::time_point startTime = std::chrono::system_clock::now();
 
@@ -331,7 +331,7 @@ std::chrono::microseconds _Convolution2D_Depthwise_k3_s2(Tensor* tensor, float* 
 	return std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime);
 }
 
-std::chrono::microseconds _Convolution2D_Pointwise_k1_s1(Tensor* tensor, float* weight, float* bias, int inChannel, int outChannel, int kernel, int stride, int padding)
+std::chrono::microseconds _Convolution2D_Pointwise_k1_s1(Tensor* tensor, float* weight, float* bias, int inChannel, int outChannel, int kernel=1, int stride=1, int padding=0)
 {
 	std::chrono::system_clock::time_point startTime = std::chrono::system_clock::now();
 
@@ -354,16 +354,24 @@ std::chrono::microseconds _Convolution2D_Pointwise_k1_s1(Tensor* tensor, float* 
 			float weightVal = *weight;
 			int inPos = inCh * area;
 
-			for (int i = 0; i < area; ++i)
+			for (int i = 0; i < area; ++i, ++data, ++tempData)
 			{
+				//float o = *data;
+				//o = o + tempData[inPos + i] * weightVal;
+				//(*data) = o;
+				//++data;
+
 				float o = *data;
-				o = o + tempData[inPos + i] * weightVal;
+				float v = *tempData;
+				o = o + v * weightVal;
 				(*data) = o;
-				++data;
+				//++data;
+				//++tempData;
 			}
 			++weight;
 			data -= area;
 		}
+		tempData = saveTempPos;
 
 		for (int i = 0; i < area; ++i)
 		{
@@ -385,10 +393,207 @@ std::chrono::microseconds _Convolution2D_Pointwise_k1_s1(Tensor* tensor, float* 
 
 
 
-
-void Postprocessing(Tensor* offset, Tensor* size, Tensor* keypoint);
-
-void Postprocessing(Tensor* offset, Tensor* size, Tensor* keypoint)
+void Transpose(Tensor* tensor);
+void Transpose(Tensor* tensor)
 {
+	int height = tensor->height;
+	int width = tensor->width;
+	int channel = tensor->channel;
 
+	float* data = tensor->data;
+	float* transTensor = new float[height * width * channel];
+	memcpy(transTensor, data, sizeof(float) * height * width * channel);
+
+	int idx = 0;
+	for (int row = 0; row < height; ++row)
+	{
+		for (int col = 0; col < width; ++col)
+		{
+			for (int ch = 0; ch < channel; ++ch, ++idx)
+			{
+				data[idx] = transTensor[ch * height * width + row * width + col];
+			}
+		}
+	}
+	delete[] transTensor;
+
+}
+
+void Mult(Tensor* tensor, Tensor* _tensor);
+void Mult(Tensor* tensor, Tensor* _tensor)
+{
+	int size = tensor->height * tensor->width * tensor->channel;
+	float* data = tensor->data;
+	float* _data = _tensor->data;
+
+	for (int i = 0; i < size; ++i)
+	{
+		data[i] = data[i] * _data[i];
+	}
+}
+
+void Equal(Tensor* tensor, Tensor* _tensor);
+void Equal(Tensor* tensor, Tensor* _tensor)
+{
+	int size = tensor->height * tensor->width * tensor->channel;
+	float* data = tensor->data;
+	float* _data = _tensor->data;
+
+	for (int i = 0; i < size; ++i)
+	{
+		data[i] = (data[i] == _data[i]) ? 1 : 0;
+	}
+}
+
+
+
+struct topk
+{
+	int index;
+	float value;
+	topk(int _index, float _value) :index(_index), value(_value) {}
+	bool operator<(const topk t) const { return this->value < t.value; }
+	bool operator>(const topk t) const { return this->value > t.value; }
+
+	bool operator<(const float t) const { return this->value < t; }
+	bool operator>(const float t) const { return this->value > t; }
+};
+struct topkGreater
+{
+	bool operator()(topk a, topk b)
+	{
+		return a.value > b.value;
+	}
+};
+struct topkLess
+{
+	bool operator()(topk a, topk b)
+	{
+		return a.value < b.value;
+	}
+};
+
+
+
+std::vector<topk> TopK(Tensor* tensor, int k);
+
+std::vector<topk> TopK(Tensor* tensor, int k)
+{
+	int size = tensor->height * tensor->width * tensor->channel;
+	float* data = tensor->data;
+
+	std::priority_queue<topk, std::vector<topk>, topkGreater> prique;
+	for (int i = 0; i < size; ++i)
+	{
+		if (prique.size() < k)
+		{
+			prique.push(topk{ i, data[i] });
+		}
+		else if (prique.top().value < data[i])
+		{
+			prique.pop();
+			prique.push(topk{ i, data[i] });
+		}
+	}
+
+	std::vector<topk> outputs;
+	outputs.reserve(k);
+	while (!prique.empty())
+	{
+		outputs.push_back(prique.top());
+		prique.pop();
+	}
+	return outputs;
+}
+
+
+
+
+struct Detection
+{
+	int category;
+	float score;
+	int x1;
+	int y1;
+	int x2;
+	int y2;
+};
+
+std::vector<Detection> Postprocessing(Tensor* offset, Tensor* size, Tensor* keypoint);
+std::vector<Detection> Postprocessing(Tensor* offset, Tensor* size, Tensor* keypoint)
+{
+	int classNum = 2;
+	int k = 10;
+	int tensorDim = keypoint->height;
+
+	Transpose(offset);
+	Transpose(size);
+	float* offsetData = offset->data;
+	float* sizeData = size->data;
+
+
+	Tensor tempTensor;
+	tempTensor.data = new float[tensorDim * tensorDim * 64];
+
+	CopyTensor(&tempTensor, keypoint);
+	_MaxPool(&tempTensor, 3, 1, 1);
+
+	Equal(&tempTensor, keypoint);
+
+	Mult(keypoint, &tempTensor);
+	Transpose(keypoint);
+	delete[] tempTensor.data;
+
+	std::vector<topk> topkOutput = TopK(keypoint, k);
+	
+	int tempIndices[10];
+	int yIndices[10];
+	int xIndices[10];
+	int detectionClasses[10];
+
+	for (int i = 0; i < k; ++i)
+	{
+		tempIndices[i] = topkOutput[i].index / classNum;
+
+		yIndices[i] = tempIndices[i] / tensorDim;
+		xIndices[i] = tempIndices[i] - (yIndices[i] * tensorDim);
+		detectionClasses[i] = topkOutput[i].index - (tempIndices[i] * classNum);
+	}
+
+	float sizes[20];
+	float offsets[20];
+	for (int i = 0; i < k; ++i)
+	{
+		sizes[i] = sizeData[yIndices[i] * tensorDim * 2 + xIndices[i] * 2 + 0] / 2;
+		sizes[i+10] = sizeData[yIndices[i] * tensorDim * 2 + xIndices[i] * 2 + 1] / 2;
+
+		offsets[i] = offsetData[yIndices[i] * tensorDim * 2 + xIndices[i] * 2 + 0];
+		offsets[i+10] = offsetData[yIndices[i] * tensorDim * 2 + xIndices[i] * 2 + 1];
+	}
+
+	float pos[20];
+	for (int i = 0; i < k; ++i)
+	{
+		pos[i] = yIndices[i] + offsets[i];
+		pos[i+10] = xIndices[i] + offsets[i+10];
+	}
+
+	float minPos[20];
+	float maxPos[20];
+	for (int i = 0; i < k; ++i)
+	{
+		minPos[i] = (pos[i] - sizes[i]) * 4;
+		minPos[i+10] = (pos[i+10] - sizes[i+10]) * 4;
+		maxPos[i] = (pos[i] + sizes[i]) * 4;
+		maxPos[i+10] = (pos[i+10] + sizes[i+10]) * 4;
+	}
+
+
+
+	std::vector<Detection> result;
+	for (int i = 0; i < k; ++i)
+	{
+		result.push_back(Detection{ detectionClasses [i], topkOutput[i].value, (int)minPos[i+10], (int)minPos[i], (int)maxPos[i+10], (int)maxPos[i]});
+	}
+	return result;
 }
