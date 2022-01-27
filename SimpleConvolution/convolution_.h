@@ -196,6 +196,9 @@ std::chrono::microseconds _Convolution2D_Depthwise_k3_s1(Tensor* tensor, float* 
 				val = val + val1 * weightVal_1 + val2 * weightVal_2 + val3 * weightVal_3 +
 					val4 * weightVal_4 + val5 * weightVal_5 + val6 * weightVal_6 +
 					val7 * weightVal_7 + val8 * weightVal_8 + val9 * weightVal_9;
+				//val =  val1 * weightVal_1 + val2 * weightVal_2 + val3 * weightVal_3 +
+				//	val4 * weightVal_4 + val5 * weightVal_5 + val6 * weightVal_6 +
+				//	val7 * weightVal_7 + val8 * weightVal_8 + val9 * weightVal_9;
 				*data = val;
 
 				++tempInputData1;
@@ -295,6 +298,9 @@ std::chrono::microseconds _Convolution2D_Depthwise_k3_s2(Tensor* tensor, float* 
 				val = val + val1 * weightVal_1 + val2 * weightVal_2 + val3 * weightVal_3 +
 					val4 * weightVal_4 + val5 * weightVal_5 + val6 * weightVal_6 +
 					val7 * weightVal_7 + val8 * weightVal_8 + val9 * weightVal_9;
+				//val = val1 * weightVal_1 + val2 * weightVal_2 + val3 * weightVal_3 +
+				//	val4 * weightVal_4 + val5 * weightVal_5 + val6 * weightVal_6 +
+				//	val7 * weightVal_7 + val8 * weightVal_8 + val9 * weightVal_9;
 				*data = val;
 				tempInputData1 += stride;
 				tempInputData2 += stride;
@@ -347,6 +353,44 @@ std::chrono::microseconds _Convolution2D_Pointwise_k1_s1(Tensor* tensor, float* 
 	float* saveTempPos = tempData;
 	float* saveDataPos = data;
 
+	
+	for (int outCh = 0; outCh < outChannel; ++outCh)
+	{
+		for (int row = 0; row < height; ++row)
+		{
+			float* tem = tempData;
+
+		}
+	}
+
+
+
+
+	for (int outCh = 0; outCh < outChannel; ++outCh)
+	{
+		float o = 0;
+		float b = *bias;
+		for (int i = 0; i < area; ++i)
+		{
+			for (int inCh = 0; inCh < inChannel; ++inCh, ++tempData)
+			{
+				float a = weight[inCh];
+				float b = *tempData;
+
+				o = o + b * a;
+			}
+			o += b;
+			(*data) = o;
+			++data;
+		}
+
+		tempData = saveTempPos;
+		++bias;
+	}
+
+
+
+
 	for (int outCh = 0; outCh < outChannel; ++outCh)
 	{
 		for (int inCh = 0; inCh < inChannel; ++inCh)
@@ -363,7 +407,10 @@ std::chrono::microseconds _Convolution2D_Pointwise_k1_s1(Tensor* tensor, float* 
 
 				float o = *data;
 				float v = *tempData;
-				o = o + v * weightVal;
+				float c = v * weightVal;
+				//o = o + v * weightVal;
+				o = c;
+				//memcpy(data, &o, sizeof(float));
 				(*data) = o;
 				//++data;
 				//++tempData;
@@ -382,6 +429,7 @@ std::chrono::microseconds _Convolution2D_Pointwise_k1_s1(Tensor* tensor, float* 
 		}
 		++bias;
 	}
+
 	tensor->channel = outChannel;
 	tensor->data = saveDataPos;
 	tempData = saveTempPos;
@@ -390,6 +438,49 @@ std::chrono::microseconds _Convolution2D_Pointwise_k1_s1(Tensor* tensor, float* 
 	std::chrono::system_clock::time_point endTime = std::chrono::system_clock::now();
 	return std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime);
 }
+
+
+
+std::chrono::microseconds Transpose(Tensor* tensor, int f);
+std::chrono::microseconds Transpose(Tensor* tensor, int f)
+{
+	std::chrono::system_clock::time_point startTime = std::chrono::system_clock::now();
+
+	int height = tensor->height;
+	int width = tensor->width;
+	int channel = tensor->channel;
+
+	float* data = tensor->data;
+	float* transTensor = new float[height * width * channel];
+	memcpy(transTensor, data, sizeof(float) * height * width * channel);
+
+	int idx = 0;
+	for (int row = 0; row < height; ++row)
+	{
+		for (int col = 0; col < width; ++col)
+		{
+			for (int ch = 0; ch < channel; ++ch, ++idx)
+			{
+				data[idx] = transTensor[ch * height * width + row * width + col];
+			}
+		}
+	}
+	delete[] transTensor;
+
+	std::chrono::system_clock::time_point endTime = std::chrono::system_clock::now();
+	return std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime);
+}
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -444,7 +535,6 @@ void Equal(Tensor* tensor, Tensor* _tensor)
 		data[i] = (data[i] == _data[i]) ? 1 : 0;
 	}
 }
-
 
 
 struct topk
