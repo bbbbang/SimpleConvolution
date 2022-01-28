@@ -353,82 +353,164 @@ std::chrono::microseconds _Convolution2D_Pointwise_k1_s1(Tensor* tensor, float* 
 	float* saveTempPos = tempData;
 	float* saveDataPos = data;
 
+
+
+	if (width % 8 == 0 && (inChannel * outChannel) % 8 == 0)
+	{
+		float weightVal[8];
+		float inData[8];
+		int repeat = width / 8;
+
+		for (int outCh = 0; outCh < outChannel; ++outCh)
+		{
+			for (int inCh = 0; inCh < inChannel; ++inCh)
+			{
+				memcpy(weightVal, weight, sizeof(float) * 8);
+
+				for (int row = 0; row < height; ++row)
+				{
+					for (int i = 0; i < width; i+=8)
+					{
+						memcpy(inData, tempData, sizeof(float) * 8);
+
+						inData[i] += inData[i] * weightVal[i];
+						inData[i + 1] += inData[i + 1] * weightVal[i + 1];
+						inData[i + 2] += inData[i + 2] * weightVal[i + 2];
+						inData[i + 3] += inData[i + 3] * weightVal[i + 3];
+						inData[i + 4] += inData[i + 4] * weightVal[i + 4];
+						inData[i + 5] += inData[i + 5] * weightVal[i + 5];
+						inData[i + 6] += inData[i + 6] * weightVal[i + 6];
+						inData[i + 7] += inData[i + 7] * weightVal[i + 7];
+
+						memcpy(tempData, inData, sizeof(float) * 8);
+						tempData += 8;
+					}
+				}
+			}
+
+			tempData = saveTempPos;
+		}
+	}
+	else
+	{
+		for (int outCh = 0; outCh < outChannel; ++outCh)
+		{
+			for (int inCh = 0; inCh < inChannel; ++inCh)
+			{
+				float weightVal = *weight;
+				int inPos = inCh * area;
+
+				for (int i = 0; i < area; ++i, ++data, ++tempData)
+				{
+					//float o = *data;
+					//o = o + tempData[inPos + i] * weightVal;
+					//(*data) = o;
+					//++data;
+
+					float o = *data;
+					float v = *tempData;
+					float c = v * weightVal;
+					//o = o + v * weightVal;
+					o += c;
+					//memcpy(data, &o, sizeof(float));
+					(*data) = c;
+					//++data;
+					//++tempData;
+				}
+				++weight;
+				data -= area;
+			}
+			tempData = saveTempPos;
+
+			for (int i = 0; i < area; ++i)
+			{
+				float val = *data + *bias;
+				//val = (val < 0) ? 0 : val;
+				*data = val;
+				++data;
+			}
+			++bias;
+		}
+	}
+
+
+
 	
-	for (int outCh = 0; outCh < outChannel; ++outCh)
-	{
-		for (int row = 0; row < height; ++row)
-		{
-			float* tem = tempData;
+	//for (int outCh = 0; outCh < outChannel; ++outCh)
+	//{
+	//	for (int row = 0; row < height; ++row)
+	//	{
+	//		float* tem = tempData;
 
-		}
-	}
-
-
-
-
-	for (int outCh = 0; outCh < outChannel; ++outCh)
-	{
-		float o = 0;
-		float b = *bias;
-		for (int i = 0; i < area; ++i)
-		{
-			for (int inCh = 0; inCh < inChannel; ++inCh, ++tempData)
-			{
-				float a = weight[inCh];
-				float b = *tempData;
-
-				o = o + b * a;
-			}
-			o += b;
-			(*data) = o;
-			++data;
-		}
-
-		tempData = saveTempPos;
-		++bias;
-	}
+	//	}
+	//}
 
 
 
 
-	for (int outCh = 0; outCh < outChannel; ++outCh)
-	{
-		for (int inCh = 0; inCh < inChannel; ++inCh)
-		{
-			float weightVal = *weight;
-			int inPos = inCh * area;
+	//for (int outCh = 0; outCh < outChannel; ++outCh)
+	//{
+	//	float o = 0;
+	//	float b = *bias;
+	//	for (int i = 0; i < area; ++i)
+	//	{
+	//		for (int inCh = 0; inCh < inChannel; ++inCh, ++tempData)
+	//		{
+	//			float a = weight[inCh];
+	//			float b = *tempData;
 
-			for (int i = 0; i < area; ++i, ++data, ++tempData)
-			{
-				//float o = *data;
-				//o = o + tempData[inPos + i] * weightVal;
-				//(*data) = o;
-				//++data;
+	//			o = o + b * a;
+	//		}
+	//		o += b;
+	//		(*data) = o;
+	//		++data;
+	//	}
 
-				float o = *data;
-				float v = *tempData;
-				float c = v * weightVal;
-				//o = o + v * weightVal;
-				o = c;
-				//memcpy(data, &o, sizeof(float));
-				(*data) = o;
-				//++data;
-				//++tempData;
-			}
-			++weight;
-			data -= area;
-		}
-		tempData = saveTempPos;
+	//	tempData = saveTempPos;
+	//	++bias;
+	//}
 
-		for (int i = 0; i < area; ++i)
-		{
-			float val = *data + *bias;
-			//val = (val < 0) ? 0 : val;
-			*data = val;
-			++data;
-		}
-		++bias;
-	}
+
+
+
+	//for (int outCh = 0; outCh < outChannel; ++outCh)
+	//{
+	//	for (int inCh = 0; inCh < inChannel; ++inCh)
+	//	{
+	//		float weightVal = *weight;
+	//		int inPos = inCh * area;
+
+	//		for (int i = 0; i < area; ++i, ++data, ++tempData)
+	//		{
+	//			//float o = *data;
+	//			//o = o + tempData[inPos + i] * weightVal;
+	//			//(*data) = o;
+	//			//++data;
+
+	//			float o = *data;
+	//			float v = *tempData;
+	//			float c = v * weightVal;
+	//			//o = o + v * weightVal;
+	//			o += c;
+	//			//memcpy(data, &o, sizeof(float));
+	//			(*data) = c;
+	//			//++data;
+	//			//++tempData;
+	//		}
+	//		++weight;
+	//		data -= area;
+	//	}
+	//	tempData = saveTempPos;
+
+	//	for (int i = 0; i < area; ++i)
+	//	{
+	//		float val = *data + *bias;
+	//		//val = (val < 0) ? 0 : val;
+	//		*data = val;
+	//		++data;
+	//	}
+	//	++bias;
+	//}
 
 	tensor->channel = outChannel;
 	tensor->data = saveDataPos;
