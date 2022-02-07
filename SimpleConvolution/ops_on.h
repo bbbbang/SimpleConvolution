@@ -10,21 +10,19 @@
 #include <vector>
 
 
-std::chrono::microseconds _Relu(Tensor* inputData);
-std::chrono::microseconds _ZeroConcat(Tensor* inputData);
-std::chrono::microseconds _Softmax(Tensor* inputData);
+void _Relu(Tensor* inputData);
+void _ZeroConcat(Tensor* inputData);
+void _Softmax(Tensor* inputData);
 
-std::chrono::microseconds _ZeroPadding(Tensor* inputData, int padding);
-std::chrono::microseconds _MaxPool(Tensor* inputData, int kernel, int stride, int padding);
-std::chrono::microseconds _Resize(Tensor* inputData, float scale);
+void _ZeroPadding(Tensor* inputData, int padding);
+void _MaxPool(Tensor* inputData, int kernel, int stride, int padding);
+void _Resize(Tensor* inputData, float scale);
 
-std::chrono::microseconds _Add(Tensor* inputData, Tensor* outputData);
-std::chrono::microseconds _Concat(Tensor* inputData, Tensor* outputData);
+void _Add(Tensor* inputData, Tensor* outputData);
+void _Concat(Tensor* inputData, Tensor* outputData);
 
-std::chrono::microseconds _Relu(Tensor* inputData)
+void _Relu(Tensor* inputData)
 {
-	std::chrono::system_clock::time_point startTime = std::chrono::system_clock::now();
-
 	float* data = inputData->data;
 	int size = inputData->width * inputData->height * inputData->channel;
 
@@ -32,14 +30,9 @@ std::chrono::microseconds _Relu(Tensor* inputData)
 	{
 		data[i] = (data[i] < 0) ? 0 : data[i];
 	}
-
-	std::chrono::system_clock::time_point endTime = std::chrono::system_clock::now();
-	return std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime);
 }
-std::chrono::microseconds _ZeroConcat(Tensor* inputData)
+void _ZeroConcat(Tensor* inputData)
 {
-	std::chrono::system_clock::time_point startTime = std::chrono::system_clock::now();
-
 	float* data = inputData->data;
 	int size = inputData->width * inputData->height * inputData->channel;
 
@@ -48,14 +41,9 @@ std::chrono::microseconds _ZeroConcat(Tensor* inputData)
 		data[i] = 0;
 	}
 	inputData->channel = inputData->channel * 2;
-
-	std::chrono::system_clock::time_point endTime = std::chrono::system_clock::now();
-	return std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime);
 }
-std::chrono::microseconds _Softmax(Tensor* inputData)
+void _Softmax(Tensor* inputData)
 {
-	std::chrono::system_clock::time_point startTime = std::chrono::system_clock::now();
-
 	int channel = inputData->channel;
 	float sum = 0;
 	float* data = inputData->data;
@@ -71,15 +59,10 @@ std::chrono::microseconds _Softmax(Tensor* inputData)
 	{
 		data[i] = data[i] / sum;
 	}
-
-	std::chrono::system_clock::time_point endTime = std::chrono::system_clock::now();
-	return std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime);
 }
 
-std::chrono::microseconds _ZeroPadding(Tensor* inputData, int padding)
+void _ZeroPadding(Tensor* inputData, int padding)
 {
-	std::chrono::system_clock::time_point startTime = std::chrono::system_clock::now();
-
 	int height = inputData->height;
 	int width = inputData->width;
 	int channel = inputData->channel;
@@ -118,14 +101,9 @@ std::chrono::microseconds _ZeroPadding(Tensor* inputData, int padding)
 	inputData->data = saveDataPos;
 	//tempData = saveTempPos;
 	delete[] saveTempPos;
-
-	std::chrono::system_clock::time_point endTime = std::chrono::system_clock::now();
-	return std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime);
 }
-std::chrono::microseconds _MaxPool(Tensor* inputData, int kernel, int stride, int padding)
+void _MaxPool(Tensor* inputData, int kernel, int stride, int padding)
 {
-	std::chrono::system_clock::time_point startTime = std::chrono::system_clock::now();
-
 	int height = inputData->height;
 	int width = inputData->width;
 	int channel = inputData->channel;
@@ -181,14 +159,9 @@ std::chrono::microseconds _MaxPool(Tensor* inputData, int kernel, int stride, in
 	inputData->data = saveDataPos;
 	//tempData = saveTempPos;
 	delete[] saveTempPos;
-
-	std::chrono::system_clock::time_point endTime = std::chrono::system_clock::now();
-	return std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime);
 }
-std::chrono::microseconds _Resize(Tensor* inputData, float scale)
+void _Resize(Tensor* inputData, float scale)
 {
-	std::chrono::system_clock::time_point startTime = std::chrono::system_clock::now();
-
 	int height = inputData->height;
 	int width = inputData->width;
 	int channel = inputData->channel;
@@ -230,15 +203,10 @@ std::chrono::microseconds _Resize(Tensor* inputData, float scale)
 	inputData->data = saveDataPos;
 	tempData = saveTempPos;
 	delete[] tempData;
-
-	std::chrono::system_clock::time_point endTime = std::chrono::system_clock::now();
-	return std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime);
 }
 
-std::chrono::microseconds _Add(Tensor* inputData, Tensor* outputData)
+void _Add(Tensor* inputData, Tensor* outputData)
 {
-	std::chrono::system_clock::time_point startTime = std::chrono::system_clock::now();
-
 	float* data = inputData->data;
 	float* _data = outputData->data;
 
@@ -248,14 +216,9 @@ std::chrono::microseconds _Add(Tensor* inputData, Tensor* outputData)
 	{
 		_data[i] += data[i];
 	}
-
-	std::chrono::system_clock::time_point endTime = std::chrono::system_clock::now();
-	return std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime);
 }
-std::chrono::microseconds _Concat(Tensor* inputData, Tensor* outputData)
+void _Concat(Tensor* inputData, Tensor* outputData)
 {
-	std::chrono::system_clock::time_point startTime = std::chrono::system_clock::now();
-
 	float* data = inputData->data;
 	float* _data = outputData->data;
 	int size = inputData->width * inputData->height * inputData->channel;
@@ -264,21 +227,15 @@ std::chrono::microseconds _Concat(Tensor* inputData, Tensor* outputData)
 	{
 		data[i] = _data[i - size];
 	}
-
 	inputData->channel = inputData->channel * 2;
-
-	std::chrono::system_clock::time_point endTime = std::chrono::system_clock::now();
-	return std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime);
 }
 
 
 
-std::chrono::microseconds _Sigmoid(Tensor* tensor);
+void _Sigmoid(Tensor* tensor);
 
-std::chrono::microseconds _Sigmoid(Tensor* tensor)
+void _Sigmoid(Tensor* tensor)
 {
-	std::chrono::system_clock::time_point startTime = std::chrono::system_clock::now();
-
 	float* data = tensor->data;
 	int size = tensor->height * tensor->width * tensor->channel;
 
@@ -286,7 +243,4 @@ std::chrono::microseconds _Sigmoid(Tensor* tensor)
 	{
 		data[i] = 1 / (1 + std::exp(-data[i]));
 	}
-
-	std::chrono::system_clock::time_point endTime = std::chrono::system_clock::now();
-	return std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime);
 }

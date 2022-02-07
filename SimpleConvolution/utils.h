@@ -38,7 +38,6 @@ struct Layer
 
 
 
-
 //// functions
 
 void ReadWeights_debug(std::string fileName, std::unordered_map<std::string, Layer>& map);
