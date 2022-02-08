@@ -1,25 +1,6 @@
 #include "utils.h"
-
-
-//#include "convolution_.h"
-
-#include "convolution_test.h"
-
-
-//#include "convolution_latency.h"
-
+#include "convolution_.h"
 //#include "opencv2/opencv.hpp"
-
-
-std::vector<Detection> Inference();
-
-
-
-
-
-
-
-
 
 std::chrono::system_clock::time_point startTime;
 std::chrono::system_clock::time_point endTime;
@@ -39,11 +20,8 @@ std::chrono::microseconds memcpyOps;
 std::chrono::microseconds transposeOps;
 
 
-
-
-
 std::unordered_map<std::string, Layer> layersMap;
-std::string weightsName = "D:/Project/SimpleConvolution/SimpleConvolution/detection_test.w";
+std::string weightsName = "E:/vscode/Torch/MultiNet_OD_custom/src/KHI/utils/tlnet_160.w";
 
 Tensor x;
 Tensor shortcutTensor;
@@ -57,7 +35,7 @@ Tensor keypointTensor;
 
 
 
-
+std::vector<Detection> Inference();
 std::vector<Detection> Inference()
 {
 	int layerId = 1;
@@ -409,7 +387,7 @@ int main()
 
 
 	int inputSize = 160;
-	
+
 	int backboneTensorSize = inputSize * inputSize * 96;
 	int headTensorSize = inputSize * inputSize * 4;
 
@@ -495,11 +473,44 @@ int main()
 		dconv += _Convolution2D_Depthwise_k3_s1(&x, layersMap[layerIndex].weights.data(), layersMap[layerIndex].bias.data(),
 			layersMap[layerIndex].inChannel, layersMap[layerIndex].outChannel, layersMap[layerIndex].kernel, layersMap[layerIndex].stride, layersMap[layerIndex].padding);
 		layerIndex = std::to_string(++layerId);
+
+		std::cout << std::endl;
+		for (int i = 0; i < x.width; ++i)
+			std::cout << x.data[i] << ", ";
+		std::cout << std::endl;
+		for (int i = 0; i < x.width; ++i)
+			std::cout << x.data[x.width + i] << ", ";
+		std::cout << std::endl;
+		for (int i = 0; i < x.width; ++i)
+			std::cout << x.data[x.width * x.height * (x.channel - 1) + i] << ", ";
+		std::cout << std::endl;
+		for (int i = 0; i < x.width; ++i)
+			std::cout << x.data[x.width * x.height * (x.channel - 1) + x.width + i] << ", ";
+		std::cout << std::endl;
+		std::cout << std::endl;
+
+
+
 		pconv += _Convolution2D_Pointwise_k1_s1(&x, layersMap[layerIndex].weights.data(), layersMap[layerIndex].bias.data(),
 			layersMap[layerIndex].inChannel, layersMap[layerIndex].outChannel, layersMap[layerIndex].kernel, layersMap[layerIndex].stride, layersMap[layerIndex].padding);
 		layerIndex = std::to_string(++layerId);
 		addOps += _Add(&shortcutTensor, &x);
 		_Relu(&x);
+
+		std::cout << std::endl;
+		for (int i = 0; i < x.width; ++i)
+			std::cout << x.data[i] << ", ";
+		std::cout << std::endl;
+		for (int i = 0; i < x.width; ++i)
+			std::cout << x.data[x.width + i] << ", ";
+		std::cout << std::endl;
+		for (int i = 0; i < x.width; ++i)
+			std::cout << x.data[x.width * x.height * (x.channel - 1) + i] << ", ";
+		std::cout << std::endl;
+		for (int i = 0; i < x.width; ++i)
+			std::cout << x.data[x.width * x.height * (x.channel - 1) + x.width + i] << ", ";
+		std::cout << std::endl;
+		std::cout << std::endl;
 
 
 		// blaze block 2 - single
@@ -507,25 +518,119 @@ int main()
 		dconv += _Convolution2D_Depthwise_k3_s1(&x, layersMap[layerIndex].weights.data(), layersMap[layerIndex].bias.data(),
 			layersMap[layerIndex].inChannel, layersMap[layerIndex].outChannel, layersMap[layerIndex].kernel, layersMap[layerIndex].stride, layersMap[layerIndex].padding);
 		layerIndex = std::to_string(++layerId);
+		std::cout << std::endl;
+		for (int i = 0; i < x.width; ++i)
+			std::cout << x.data[i] << ", ";
+		std::cout << std::endl;
+		for (int i = 0; i < x.width; ++i)
+			std::cout << x.data[x.width + i] << ", ";
+		std::cout << std::endl;
+		for (int i = 0; i < x.width; ++i)
+			std::cout << x.data[x.width * x.height * (x.channel - 1) + i] << ", ";
+		std::cout << std::endl;
+		for (int i = 0; i < x.width; ++i)
+			std::cout << x.data[x.width * x.height * (x.channel - 1) + x.width + i] << ", ";
+		std::cout << std::endl;
+		std::cout << std::endl;
+
+
+
 		pconv += _Convolution2D_Pointwise_k1_s1(&x, layersMap[layerIndex].weights.data(), layersMap[layerIndex].bias.data(),
 			layersMap[layerIndex].inChannel, layersMap[layerIndex].outChannel, layersMap[layerIndex].kernel, layersMap[layerIndex].stride, layersMap[layerIndex].padding);
 		layerIndex = std::to_string(++layerId);
 		addOps += _Add(&shortcutTensor, &x);
 		_Relu(&x);
 
+
+		std::cout << std::endl;
+		for (int i = 0; i < x.width; ++i)
+			std::cout << x.data[i] << ", ";
+		std::cout << std::endl;
+		for (int i = 0; i < x.width; ++i)
+			std::cout << x.data[x.width + i] << ", ";
+		std::cout << std::endl;
+		for (int i = 0; i < x.width; ++i)
+			std::cout << x.data[x.width * x.height * (x.channel - 1) + i] << ", ";
+		std::cout << std::endl;
+		for (int i = 0; i < x.width; ++i)
+			std::cout << x.data[x.width * x.height * (x.channel - 1) + x.width + i] << ", ";
+		std::cout << std::endl;
+		std::cout << std::endl;
+
 		// blaze block 3 - single
 		CopyTensor(&shortcutTensor, &x);
 		maxpoolOps += _MaxPool(&shortcutTensor, 2, 2, 0);
+		std::cout << std::endl;
+		for (int i = 0; i < shortcutTensor.width; ++i)
+			std::cout << shortcutTensor.data[i] << ", ";
+		std::cout << std::endl;
+		for (int i = 0; i < shortcutTensor.width; ++i)
+			std::cout << shortcutTensor.data[shortcutTensor.width + i] << ", ";
+		std::cout << std::endl;
+		for (int i = 0; i < shortcutTensor.width; ++i)
+			std::cout << shortcutTensor.data[shortcutTensor.width * shortcutTensor.height * (shortcutTensor.channel - 1) + i] << ", ";
+		std::cout << std::endl;
+		for (int i = 0; i < shortcutTensor.width; ++i)
+			std::cout << shortcutTensor.data[shortcutTensor.width * shortcutTensor.height * (shortcutTensor.channel - 1) + shortcutTensor.width + i] << ", ";
+		std::cout << std::endl;
+		std::cout << std::endl;
+
 		concatOps += _ZeroConcat(&shortcutTensor);
 		dconv += _Convolution2D_Depthwise_k3_s2(&x, layersMap[layerIndex].weights.data(), layersMap[layerIndex].bias.data(),
 			layersMap[layerIndex].inChannel, layersMap[layerIndex].outChannel, layersMap[layerIndex].kernel, layersMap[layerIndex].stride, layersMap[layerIndex].padding);
 		layerIndex = std::to_string(++layerId);
+		std::cout << std::endl;
+		for (int i = 0; i < x.width; ++i)
+			std::cout << x.data[i] << ", ";
+		std::cout << std::endl;
+		for (int i = 0; i < x.width; ++i)
+			std::cout << x.data[x.width + i] << ", ";
+		std::cout << std::endl;
+		for (int i = 0; i < x.width; ++i)
+			std::cout << x.data[x.width * x.height * (x.channel - 1) + i] << ", ";
+		std::cout << std::endl;
+		for (int i = 0; i < x.width; ++i)
+			std::cout << x.data[x.width * x.height * (x.channel - 1) + x.width + i] << ", ";
+		std::cout << std::endl;
+		std::cout << std::endl;
+
 		pconv += _Convolution2D_Pointwise_k1_s1(&x, layersMap[layerIndex].weights.data(), layersMap[layerIndex].bias.data(),
 			layersMap[layerIndex].inChannel, layersMap[layerIndex].outChannel, layersMap[layerIndex].kernel, layersMap[layerIndex].stride, layersMap[layerIndex].padding);
 		layerIndex = std::to_string(++layerId);
+		std::cout << std::endl;
+		for (int i = 0; i < x.width; ++i)
+			std::cout << x.data[i] << ", ";
+		std::cout << std::endl;
+		for (int i = 0; i < x.width; ++i)
+			std::cout << x.data[x.width + i] << ", ";
+		std::cout << std::endl;
+		for (int i = 0; i < x.width; ++i)
+			std::cout << x.data[x.width * x.height * (x.channel - 1) + i] << ", ";
+		std::cout << std::endl;
+		for (int i = 0; i < x.width; ++i)
+			std::cout << x.data[x.width * x.height * (x.channel - 1) + x.width + i] << ", ";
+		std::cout << std::endl;
+		std::cout << std::endl;
+
 		addOps += _Add(&shortcutTensor, &x);
 		_Relu(&x);
 		CopyTensor(&s4Tensor, &x);
+
+		std::cout << std::endl;
+		for (int i = 0; i < x.width; ++i)
+			std::cout << x.data[i] << ", ";
+		std::cout << std::endl;
+		for (int i = 0; i < x.width; ++i)
+			std::cout << x.data[x.width + i] << ", ";
+		std::cout << std::endl;
+		for (int i = 0; i < x.width; ++i)
+			std::cout << x.data[x.width * x.height * (x.channel - 1) + i] << ", ";
+		std::cout << std::endl;
+		for (int i = 0; i < x.width; ++i)
+			std::cout << x.data[x.width * x.height * (x.channel - 1) + x.width + i] << ", ";
+		std::cout << std::endl;
+		std::cout << std::endl;
+
 
 		// blaze block 4 - single
 		CopyTensor(&shortcutTensor, &x);
@@ -538,6 +643,23 @@ int main()
 		addOps += _Add(&shortcutTensor, &x);
 		_Relu(&x);
 
+		std::cout << std::endl;
+		for (int i = 0; i < x.width; ++i)
+			std::cout << x.data[i] << ", ";
+		std::cout << std::endl;
+		for (int i = 0; i < x.width; ++i)
+			std::cout << x.data[x.width + i] << ", ";
+		std::cout << std::endl;
+		for (int i = 0; i < x.width; ++i)
+			std::cout << x.data[x.width * x.height * (x.channel - 1) + i] << ", ";
+		std::cout << std::endl;
+		for (int i = 0; i < x.width; ++i)
+			std::cout << x.data[x.width * x.height * (x.channel - 1) + x.width + i] << ", ";
+		std::cout << std::endl;
+		std::cout << std::endl;
+
+
+
 		// blaze block 5 - single
 		CopyTensor(&shortcutTensor, &x);
 		dconv += _Convolution2D_Depthwise_k3_s1(&x, layersMap[layerIndex].weights.data(), layersMap[layerIndex].bias.data(),
@@ -548,6 +670,24 @@ int main()
 		layerIndex = std::to_string(++layerId);
 		addOps += _Add(&shortcutTensor, &x);
 		_Relu(&x);
+
+		std::cout << std::endl;
+		for (int i = 0; i < x.width; ++i)
+			std::cout << x.data[i] << ", ";
+		std::cout << std::endl;
+		for (int i = 0; i < x.width; ++i)
+			std::cout << x.data[x.width + i] << ", ";
+		std::cout << std::endl;
+		for (int i = 0; i < x.width; ++i)
+			std::cout << x.data[x.width * x.height * (x.channel - 1) + i] << ", ";
+		std::cout << std::endl;
+		for (int i = 0; i < x.width; ++i)
+			std::cout << x.data[x.width * x.height * (x.channel - 1) + x.width + i] << ", ";
+		std::cout << std::endl;
+		std::cout << std::endl;
+
+
+
 
 		// blaze block 6 - double
 		CopyTensor(&shortcutTensor, &x);
@@ -569,6 +709,23 @@ int main()
 		_Relu(&x);
 		CopyTensor(&s8Tensor, &x);
 
+		std::cout << std::endl;
+		for (int i = 0; i < x.width; ++i)
+			std::cout << x.data[i] << ", ";
+		std::cout << std::endl;
+		for (int i = 0; i < x.width; ++i)
+			std::cout << x.data[x.width + i] << ", ";
+		std::cout << std::endl;
+		for (int i = 0; i < x.width; ++i)
+			std::cout << x.data[x.width * x.height * (x.channel - 1) + i] << ", ";
+		std::cout << std::endl;
+		for (int i = 0; i < x.width; ++i)
+			std::cout << x.data[x.width * x.height * (x.channel - 1) + x.width + i] << ", ";
+		std::cout << std::endl;
+		std::cout << std::endl;
+
+
+
 		// blaze block 7 - double
 		CopyTensor(&shortcutTensor, &x);
 		dconv += _Convolution2D_Depthwise_k3_s1(&x, layersMap[layerIndex].weights.data(), layersMap[layerIndex].bias.data(),
@@ -586,6 +743,23 @@ int main()
 		addOps += _Add(&shortcutTensor, &x);
 		_Relu(&x);
 
+		std::cout << std::endl;
+		for (int i = 0; i < x.width; ++i)
+			std::cout << x.data[i] << ", ";
+		std::cout << std::endl;
+		for (int i = 0; i < x.width; ++i)
+			std::cout << x.data[x.width + i] << ", ";
+		std::cout << std::endl;
+		for (int i = 0; i < x.width; ++i)
+			std::cout << x.data[x.width * x.height * (x.channel - 1) + i] << ", ";
+		std::cout << std::endl;
+		for (int i = 0; i < x.width; ++i)
+			std::cout << x.data[x.width * x.height * (x.channel - 1) + x.width + i] << ", ";
+		std::cout << std::endl;
+		std::cout << std::endl;
+
+
+
 		// blaze block 8 - double
 		CopyTensor(&shortcutTensor, &x);
 		dconv += _Convolution2D_Depthwise_k3_s1(&x, layersMap[layerIndex].weights.data(), layersMap[layerIndex].bias.data(),
@@ -602,6 +776,23 @@ int main()
 		layerIndex = std::to_string(++layerId);
 		addOps += _Add(&shortcutTensor, &x);
 		_Relu(&x);
+
+		std::cout << std::endl;
+		for (int i = 0; i < x.width; ++i)
+			std::cout << x.data[i] << ", ";
+		std::cout << std::endl;
+		for (int i = 0; i < x.width; ++i)
+			std::cout << x.data[x.width + i] << ", ";
+		std::cout << std::endl;
+		for (int i = 0; i < x.width; ++i)
+			std::cout << x.data[x.width * x.height * (x.channel - 1) + i] << ", ";
+		std::cout << std::endl;
+		for (int i = 0; i < x.width; ++i)
+			std::cout << x.data[x.width * x.height * (x.channel - 1) + x.width + i] << ", ";
+		std::cout << std::endl;
+		std::cout << std::endl;
+
+
 
 		// blaze block 9 - double
 		CopyTensor(&shortcutTensor, &x);
@@ -622,6 +813,24 @@ int main()
 		_Relu(&x);
 		CopyTensor(&s16Tensor, &x);
 
+		std::cout << std::endl;
+		for (int i = 0; i < x.width; ++i)
+			std::cout << x.data[i] << ", ";
+		std::cout << std::endl;
+		for (int i = 0; i < x.width; ++i)
+			std::cout << x.data[x.width + i] << ", ";
+		std::cout << std::endl;
+		for (int i = 0; i < x.width; ++i)
+			std::cout << x.data[x.width * x.height * (x.channel - 1) + i] << ", ";
+		std::cout << std::endl;
+		for (int i = 0; i < x.width; ++i)
+			std::cout << x.data[x.width * x.height * (x.channel - 1) + x.width + i] << ", ";
+		std::cout << std::endl;
+		std::cout << std::endl;
+
+
+
+
 		// blaze block 10 - double
 		CopyTensor(&shortcutTensor, &x);
 		dconv += _Convolution2D_Depthwise_k3_s1(&x, layersMap[layerIndex].weights.data(), layersMap[layerIndex].bias.data(),
@@ -639,6 +848,24 @@ int main()
 		addOps += _Add(&shortcutTensor, &x);
 		_Relu(&x);
 
+		std::cout << std::endl;
+		for (int i = 0; i < x.width; ++i)
+			std::cout << x.data[i] << ", ";
+		std::cout << std::endl;
+		for (int i = 0; i < x.width; ++i)
+			std::cout << x.data[x.width + i] << ", ";
+		std::cout << std::endl;
+		for (int i = 0; i < x.width; ++i)
+			std::cout << x.data[x.width * x.height * (x.channel - 1) + i] << ", ";
+		std::cout << std::endl;
+		for (int i = 0; i < x.width; ++i)
+			std::cout << x.data[x.width * x.height * (x.channel - 1) + x.width + i] << ", ";
+		std::cout << std::endl;
+		std::cout << std::endl;
+
+
+
+
 		// blaze block 11 - double
 		CopyTensor(&shortcutTensor, &x);
 		dconv += _Convolution2D_Depthwise_k3_s1(&x, layersMap[layerIndex].weights.data(), layersMap[layerIndex].bias.data(),
@@ -655,6 +882,23 @@ int main()
 		layerIndex = std::to_string(++layerId);
 		addOps += _Add(&shortcutTensor, &x);
 		_Relu(&x);
+
+
+		std::cout << std::endl;
+		for (int i = 0; i < x.width; ++i)
+			std::cout << x.data[i] << ", ";
+		std::cout << std::endl;
+		for (int i = 0; i < x.width; ++i)
+			std::cout << x.data[x.width + i] << ", ";
+		std::cout << std::endl;
+		for (int i = 0; i < x.width; ++i)
+			std::cout << x.data[x.width * x.height * (x.channel - 1) + i] << ", ";
+		std::cout << std::endl;
+		for (int i = 0; i < x.width; ++i)
+			std::cout << x.data[x.width * x.height * (x.channel - 1) + x.width + i] << ", ";
+		std::cout << std::endl;
+		std::cout << std::endl;
+
 
 
 		// fpn - feature map stride 4 - from blaze block 3
@@ -784,6 +1028,13 @@ int main()
 			layersMap[layerIndex].inChannel, layersMap[layerIndex].outChannel, layersMap[layerIndex].kernel, layersMap[layerIndex].stride, layersMap[layerIndex].padding);
 		layerIndex = std::to_string(++layerId); // keypoint out
 
+		std::cout << std::endl;
+		for (int i = 0; i < 10; ++i)
+		{
+			std::cout << keypointTensor.data[i] << ", ";
+		}
+		std::cout << std::endl;
+
 
 		std::vector<Detection> temp;
 		temp = Postprocessing(&offsetTensor, &sizeTensor, &keypointTensor);
@@ -795,7 +1046,7 @@ int main()
 	}
 
 	std::cout << "detection average : " << total.count() / 100 << " us ... " << total.count() / 100 / 1000 << " ms" << std::endl;
-	
+
 	std::cout << "detection nconv average : " << nconv.count() / 100 << " us ... " << nconv.count() / 100 / 1000 << " ms" << std::endl;
 	std::cout << "detection dconv average : " << dconv.count() / 100 << " us ... " << dconv.count() / 100 / 1000 << " ms" << std::endl;
 	std::cout << "detection pconv average : " << pconv.count() / 100 << " us ... " << pconv.count() / 100 / 1000 << " ms" << std::endl;
@@ -816,7 +1067,7 @@ int main()
 	clsTensor.height = 16;
 	clsTensor.width = 16;
 	clsTensor.channel = 3;
-	clsTensor.data = new float[sizeof(float)*16*16*32];
+	clsTensor.data = new float[sizeof(float) * 16 * 16 * 32];
 	// classification model
 	startTime = std::chrono::system_clock::now();
 
