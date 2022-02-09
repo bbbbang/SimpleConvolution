@@ -326,34 +326,32 @@ if __name__=='__main__':
 			nn.init.normal_(module.weight.data)
 			nn.init.normal_(module.bias.data)
 
-	#model.apply(initialize)
+	model.apply(initialize)
+
+	#torch.save(model.state_dict(), './temp_weight.pth')
+	model.load_state_dict(torch.load('./temp_weight.pth'))
 
 	import torchsummary
 	model = model.eval()
 	torchsummary.summary(model, (3, 112, 112), 1, device='cpu')
 	
-
-	print('before')
 	get_modules_blank(model)
-
-	print('after')
-	get_modules_blank(model)
-
 
 	model.backbone.conv1.register_forward_hook(get_feature)
+
+
+
 
 	temp = torch.ones((1, 3,160,160))
 	model(temp)
 
 
+
+
+
+
+
 	export_weight_binary(model, './detection_test.w')
-
-	# flatten_weight_file = './src/KHI/utils/detection1'
-	# bin_file = open(flatten_weight_file + '.w', 'wb')
-	# export_binary(model, bin_file)
-	# bin_file.close()
-
-
 
 	import torch.onnx
 	dummy_data = torch.empty(1, 3, 112, 112, dtype=torch.float32)

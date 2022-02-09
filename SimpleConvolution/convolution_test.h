@@ -66,8 +66,8 @@ std::chrono::microseconds _Convolution2D_k3_s2(Tensor* tensor, float* weight, fl
 		for (int inCh = 0; inCh < inChannel; ++inCh)
 		{
 			float* val = data;
-			if (inCh == 0)
-				*val += *bias;
+			//if (inCh == 0)
+			//	*val += *bias;
 
 			int kernelIndex = outKernel + inCh * 9;
 
@@ -80,50 +80,95 @@ std::chrono::microseconds _Convolution2D_k3_s2(Tensor* tensor, float* weight, fl
 			//float weightVal_7 = *weight++, weightVal_8 = *weight++, weightVal_9 = *weight++;
 			//memcpy(weightVal, weight, 4 * 9);
 			//weight += 9;
-			for (int row = 0; row < height; row += stride)
+			//for (int row = 0; row < height; row += stride)
+			//{
+			//	for (int col = 0; col < width; col += stride)
+			//	{
+			//		//float* val = data;
+
+			//		//float val1 = *(tempInputData1);
+			//		//float val2 = *(tempInputData1 + 1);
+			//		//float val3 = *(tempInputData1 + 2);
+
+			//		//float val4 = *(tempInputData2);
+			//		//float val5 = *(tempInputData2 + 1);
+			//		//float val6 = *(tempInputData2 + 2);
+
+			//		//float val7 = *(tempInputData3);
+			//		//float val8 = *(tempInputData3 + 1);
+			//		//float val9 = *(tempInputData3 + 2);
+
+			//		//*val += val1 * weightVal_1 + val2 * weightVal_2 + val3 * weightVal_3 +
+			//		//	val4 * weightVal_4 + val5 * weightVal_5 + val6 * weightVal_6 +
+			//		//	val7 * weightVal_7 + val8 * weightVal_8 + val9 * weightVal_9;
+
+			//		* val += *(tempInputData1++) * weightVal_1 + *(tempInputData1++) * weightVal_2 + *(tempInputData1)*weightVal_3 +
+			//			*(tempInputData2++) * weightVal_4 + *(tempInputData2++) * weightVal_5 + *(tempInputData2)*weightVal_6 +
+			//			*(tempInputData3++) * weightVal_7 + *(tempInputData3++) * weightVal_8 + *(tempInputData3)*weightVal_9;
+
+			//		//*val += *(tempInputData1++) * weightVal[0] + *(tempInputData1++) * weightVal[1] + *(tempInputData1)*weightVal[2] +
+			//		//	*(tempInputData2++) *  weightVal[3] + *(tempInputData2++) *  weightVal[4] + *(tempInputData2)* weightVal[5] +
+			//		//	*(tempInputData3++) *  weightVal[6] + *(tempInputData3++) *  weightVal[7] + *(tempInputData3)* weightVal[8];
+			//		//*data = val;
+
+			//		//tempInputData1 += stride;
+			//		//tempInputData2 += stride;
+			//		//tempInputData3 += stride;
+			//		++val;
+			//	}
+			//	tempInputData1 += padWidth + 2;
+			//	tempInputData2 += padWidth + 2;
+			//	tempInputData3 += padWidth + 2;
+			//}
+			//tempInputData1 += padWidth * 2;
+			//tempInputData2 += padWidth * 2;
+			//tempInputData3 += padWidth * 2;
+			////data -= outputArea;
+
+
+
+			if (inCh == 0)
 			{
-				for (int col = 0; col < width; col += stride)
+				for (int row = 0; row < height; row += stride)
 				{
-					//float* val = data;
-
-					//float val1 = *(tempInputData1);
-					//float val2 = *(tempInputData1 + 1);
-					//float val3 = *(tempInputData1 + 2);
-
-					//float val4 = *(tempInputData2);
-					//float val5 = *(tempInputData2 + 1);
-					//float val6 = *(tempInputData2 + 2);
-
-					//float val7 = *(tempInputData3);
-					//float val8 = *(tempInputData3 + 1);
-					//float val9 = *(tempInputData3 + 2);
-
-					//*val += val1 * weightVal_1 + val2 * weightVal_2 + val3 * weightVal_3 +
-					//	val4 * weightVal_4 + val5 * weightVal_5 + val6 * weightVal_6 +
-					//	val7 * weightVal_7 + val8 * weightVal_8 + val9 * weightVal_9;
-
-					* val += *(tempInputData1++) * weightVal_1 + *(tempInputData1++) * weightVal_2 + *(tempInputData1)*weightVal_3 +
-						*(tempInputData2++) * weightVal_4 + *(tempInputData2++) * weightVal_5 + *(tempInputData2)*weightVal_6 +
-						*(tempInputData3++) * weightVal_7 + *(tempInputData3++) * weightVal_8 + *(tempInputData3)*weightVal_9;
-
-					//*val += *(tempInputData1++) * weightVal[0] + *(tempInputData1++) * weightVal[1] + *(tempInputData1)*weightVal[2] +
-					//	*(tempInputData2++) *  weightVal[3] + *(tempInputData2++) *  weightVal[4] + *(tempInputData2)* weightVal[5] +
-					//	*(tempInputData3++) *  weightVal[6] + *(tempInputData3++) *  weightVal[7] + *(tempInputData3)* weightVal[8];
-					//*data = val;
-
-					//tempInputData1 += stride;
-					//tempInputData2 += stride;
-					//tempInputData3 += stride;
-					++val;
+					for (int col = 0; col < width; col += stride)
+					{
+						*val += *(tempInputData1++) * weightVal_1 + *(tempInputData1++) * weightVal_2 + *(tempInputData1)*weightVal_3 +
+							*(tempInputData2++) * weightVal_4 + *(tempInputData2++) * weightVal_5 + *(tempInputData2)*weightVal_6 +
+							*(tempInputData3++) * weightVal_7 + *(tempInputData3++) * weightVal_8 + *(tempInputData3)*weightVal_9 + *bias;
+						++val;
+					}
+					tempInputData1 += padWidth + 2;
+					tempInputData2 += padWidth + 2;
+					tempInputData3 += padWidth + 2;
 				}
-				tempInputData1 += padWidth + 2;
-				tempInputData2 += padWidth + 2;
-				tempInputData3 += padWidth + 2;
+				tempInputData1 += padWidth * 2;
+				tempInputData2 += padWidth * 2;
+				tempInputData3 += padWidth * 2;
 			}
-			tempInputData1 += padWidth * 2;
-			tempInputData2 += padWidth * 2;
-			tempInputData3 += padWidth * 2;
-			//data -= outputArea;
+			else
+			{
+				for (int row = 0; row < height; row += stride)
+				{
+					for (int col = 0; col < width; col += stride)
+					{
+						*val += *(tempInputData1++) * weightVal_1 + *(tempInputData1++) * weightVal_2 + *(tempInputData1)*weightVal_3 +
+							*(tempInputData2++) * weightVal_4 + *(tempInputData2++) * weightVal_5 + *(tempInputData2)*weightVal_6 +
+							*(tempInputData3++) * weightVal_7 + *(tempInputData3++) * weightVal_8 + *(tempInputData3)*weightVal_9;
+						++val;
+					}
+					tempInputData1 += padWidth + 2;
+					tempInputData2 += padWidth + 2;
+					tempInputData3 += padWidth + 2;
+				}
+				tempInputData1 += padWidth * 2;
+				tempInputData2 += padWidth * 2;
+				tempInputData3 += padWidth * 2;
+			}
+
+
+
+
 		}
 		//for (int i = 0; i < outputArea; ++i)
 		//{
@@ -415,12 +460,29 @@ std::chrono::microseconds _Convolution2D_Pointwise_k1_s1(Tensor* tensor, float* 
 			float weightVal = *weight;
 
 			if (inCh == 0)
-				*o += *bias;
-			for (int i = 0; i < area; ++i)
 			{
-				(*o) += *v * weightVal;
-				++o;
-				++v;
+				//	*o += *bias;
+				for (int i = 0; i < area; ++i)
+				{
+					//float as = *o;
+					//as += *v * weightVal;
+					//*o = as;
+					(*o++) += *v++ * weightVal + *bias;
+					//++o;
+					//++v;
+				}
+			}
+			else
+			{
+				for (int i = 0; i < area; ++i)
+				{
+					//float as = *o;
+					//as += *v * weightVal;
+					//*o = as;
+					(*o++) += *v++ * weightVal;
+					//++o;
+					//++v;
+				}
 			}
 			++weight;
 		}

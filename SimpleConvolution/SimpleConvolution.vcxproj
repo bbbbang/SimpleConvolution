@@ -157,11 +157,13 @@
   <ItemGroup>
     <ClInclude Include="convolution.h" />
     <ClInclude Include="convolution_.h" />
+    <ClInclude Include="convolution_20220204.h" />
     <ClInclude Include="convolution_on.h" />
     <ClInclude Include="convolution_test.h" />
     <ClInclude Include="inference.h" />
     <ClInclude Include="ops.h" />
     <ClInclude Include="ops_.h" />
+    <ClInclude Include="ops_20220208.h" />
     <ClInclude Include="ops_on.h" />
     <ClInclude Include="utils.h" />
   </ItemGroup>

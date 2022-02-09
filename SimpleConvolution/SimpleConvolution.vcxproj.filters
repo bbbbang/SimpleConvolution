@@ -56,5 +56,11 @@
     <ClInclude Include="ops_on.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
+    <ClInclude Include="convolution_20220204.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="ops_20220208.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

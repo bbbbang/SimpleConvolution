@@ -1,5 +1,5 @@
 #include "utils.h"
-#include "convolution_.h"
+#include "convolution_20220204.h"
 //#include "opencv2/opencv.hpp"
 
 std::chrono::system_clock::time_point startTime;
@@ -21,8 +21,7 @@ std::chrono::microseconds transposeOps;
 
 
 std::unordered_map<std::string, Layer> layersMap;
-std::string weightsName = "E:/vscode/Torch/MultiNet_OD_custom/src/KHI/utils/tlnet_160.w";
-
+std::string weightsName = "D:/Project/SimpleConvolution/detection_test.w";
 Tensor x;
 Tensor shortcutTensor;
 Tensor s4Tensor;
