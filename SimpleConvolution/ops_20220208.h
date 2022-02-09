@@ -177,6 +177,7 @@ std::chrono::microseconds _MaxPool(Tensor* inputData, int kernel, int stride, in
 				tempData += stride;
 				//++data;
 			}
+			tempData += width;
 		}
 	}
 
@@ -226,6 +227,7 @@ std::chrono::microseconds _Resize(Tensor* inputData, float scale)
 				data += 2;
 				++tempData;
 			}
+			data += outputWidth;
 		}
 	}
 

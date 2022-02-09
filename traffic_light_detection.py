@@ -10,6 +10,13 @@ import glob
 from termcolor import colored
 
 
+import sys
+sys.path.append('./src/KHI/utils')
+import tl_dataloader as dataloader
+import tl_centernet_loss as loss
+
+
+
 class Conv_BN(nn.Module):
 	def __init__(self, in_channels, out_channels, kernel_size, stride, padding, groups, bias=False):
 		super().__init__()
@@ -20,6 +27,13 @@ class Conv_BN(nn.Module):
 			return self.fused_conv(x)
 		return self.bn(self.conv(x))
 
+class SeparableConv_BN(nn.Module):
+	def __init__(self, in_channels, out_channels, kernel_size, stride, padding, groups, bias=False):
+		super().__init__()
+		self.dconv = Conv_BN(in_channels=in_channels, out_channels=in_channels, kernel_size=kernel_size,stride=stride, padding=padding, groups=in_channels, bias=False)
+		self.pconv = Conv_BN(in_channels=in_channels, out_channels=out_channels, kernel_size=1, stride=1, padding=0, groups=1, bias=False)
+	def forward(self, x):
+		return self.pconv(self.dconv(x))
 
 class BlazeBlock(nn.Module):
 	def __init__(self, in_channels, out_channels_1, out_channels_2=None, kernel_size=5, stride=1, use_double=False):
@@ -62,6 +76,34 @@ class BlazeBlock(nn.Module):
 		x1 = self.act(x1 + x)
 		return x1
 
+
+class TestModel(nn.Module):
+	def __init__(self):
+		super().__init__()
+		self.act = nn.ReLU()
+		self.conv1 = Conv_BN(in_channels=3, out_channels=24, kernel_size=3, stride=2, padding=1, groups=1)
+		self.sconv1 = SeparableConv_BN(in_channels=24, out_channels=24, kernel_size=3, stride=1, padding=1, groups=1)
+		self.sconv2 = SeparableConv_BN(in_channels=24, out_channels=12, kernel_size=3, stride=2, padding=1, groups=1)
+		self.sconv3 = SeparableConv_BN(in_channels=12, out_channels=12, kernel_size=3, stride=1, padding=1, groups=1)
+		self.sconv4 = SeparableConv_BN(in_channels=12, out_channels=6, kernel_size=3, stride=2, padding=1, groups=1)
+		self.sconv5 = SeparableConv_BN(in_channels=6, out_channels=2, kernel_size=3, stride=1, padding=1, groups=1)
+		#self.sconv3 = SeparableConv_BN(in_channels=48, out_channels=24, kernel_size=3, stride=1, padding=1, groups=1)
+
+	def forward(self, x):
+		#x = self.act(self.conv1(x))
+		#x = self.act(self.sconv1(x))
+		#x = self.act(self.sconv2(x))
+		#x = self.act(self.sconv3(x))
+		#x = self.act(self.sconv4(x))
+		#x = self.act(self.sconv5(x))
+
+		x = (self.conv1(x))
+		x = (self.sconv1(x))
+		x = (self.sconv2(x))
+		x = (self.sconv3(x))
+		x = (self.sconv4(x))
+		x = (self.sconv5(x))
+		return x
 
 class Backbone(nn.Module):
 	def __init__(self):
@@ -165,7 +207,6 @@ class Head(nn.Module):
 		self.keypoint_out = nn.Conv2d(in_channels=out_channels, out_channels=num_class, kernel_size=1, stride=1, padding=0, bias=True)
 
 	def forward(self, x):
-		
 		x_offset = self.act(self.offset_pwconv1(self.offset_dwconv1(x)))
 		x_offset = self.act(self.offset_pwconv2(self.offset_dwconv2(x_offset)))
 		x_offset = self.offset_out(x_offset)
@@ -186,7 +227,6 @@ class Head(nn.Module):
 class TLNet(nn.Module):
 	def __init__(self):
 		super().__init__()
-
 		self.backbone = Backbone()
 		self.neck = Neck(in_28x28=48, in_14x14=96, in_7_7=96, in_backbone=96, out_28x28=40, out_14x14=40, out_7x7=40)
 		self.head = Head(in_channels=40, out_channels=40, num_class=2)
@@ -196,10 +236,6 @@ class TLNet(nn.Module):
 		x = self.neck(x_28x28, x_14x14, x_7x7, x_backbone)
 		x = self.head(x)
 		return {'reg': x[0],'wh': x[1],'cls': x[2]}
-
-
-
-
 
 
 def fuse_bn(kernel, bn):
@@ -233,11 +269,9 @@ def get_modules_blank(module):
 
 			delattr(item, 'conv')
 			delattr(item, 'bn')
-
+			
 			for para in item.parameters():
 				para.detach_()
-
-
 
 def export_weight_binary(model, output_path):
 
@@ -304,20 +338,24 @@ def export_weight_binary(model, output_path):
 
 	bin_file.close()
 
-
 def get_feature(self, input, output):
-	print(output)
+	#print(self.weight)
+	#print(self.bias)
+	#print(input)
+	#print('\n')
 
 
+	#print(input[0][0,0,0])
+	#print(input[0][0,0,1])
+	#print(input[0][0,input[0].shape[1]-1,0])
+	#print(input[0][0,input[0].shape[1]-1,1])
 
-
-
-
-
-
-
-import src.KHI.utils.dataloader_tl as dataloader
-import src.KHI.utils.centernet_loss as loss
+	print(output[0,0,0])
+	print(output[0,0,1])
+	print(output[0,output.shape[1]-1,0])
+	print(output[0,output.shape[1]-1,1])
+	#print(output)
+	print('\n')
 
 
 def train(model, output_dir, train_image_path, train_label_path, input_size=160, load_weight=False):
@@ -334,7 +372,7 @@ def train(model, output_dir, train_image_path, train_label_path, input_size=160,
 	summary_dir = output_dir + 'logs'
 
 	if load_weight:
-		weight_list = glob.glob(output_dir + '*.pt')
+		weight_list = glob.glob(output_dir + '*-*.pt')
 		weight_file = weight_list[-1]
 		#model.load_state_dict(torch.load(weight_file), strict=False)
 		model = torch.load(weight_file)
@@ -416,55 +454,136 @@ def write_object_loss(writer_, name_, loss_log_, lr, step_):
 
 if __name__=='__main__':
 
+	job_type = 3
 
 	model = TLNet()
-
-	output_dir = 'E:/vscode/Torch/MultiNet_OD_custom/model/20220128_blaze_tl'
-	train_image_path = 'E:/carvi_dataset/LearningDataset/20211210_dataset/20211210_dataset/tl_data'
-	train_label_path = 'E:/carvi_dataset/LearningDataset/20211210_dataset/20211210_dataset/tl_data/tl_map_annotation.json'
-	input_size = 160
-	load_weight = False
-	train(model, output_dir, train_image_path, train_label_path, input_size, load_weight)
+	#model = TestModel()
 
 
 
+	if job_type == 1:
+		output_dir = 'E:/vscode/Torch/MultiNet_OD_custom/model/20220208_blaze_tl_160'
+		train_image_path = 'E:/carvi_dataset/LearningDataset/20211210_dataset/20211210_dataset/tl_data'
+		train_label_path = 'E:/carvi_dataset/LearningDataset/20211210_dataset/20211210_dataset/tl_data/tl_map_annotation.json'
+		input_size = 160
+		load_weight = True
+		train(model, output_dir, train_image_path, train_label_path, input_size, load_weight)
 
-	model = TLNet()
+	elif job_type == 2:
+		def initialize(module):
+			if isinstance(module, nn.BatchNorm2d):
+				nn.init.normal_(module.weight.data)
+				nn.init.normal_(module.bias.data)
+		model.apply(initialize)
 
-	def initialize(module):
-		if isinstance(module, nn.BatchNorm2d):
-			nn.init.normal_(module.weight.data)
-			nn.init.normal_(module.bias.data)
+		load_weight = False
+		if load_weight:
+			output_dir = 'E:/vscode/Torch/MultiNet_OD_custom/model/20220208_blaze_tl_160'
+			weight_list = glob.glob(output_dir + '/*-*.pth')
+			weight_file = weight_list[-1]
+			model.load_state_dict(torch.load(weight_file), strict=False)
+			print(colored(f'load model -> {weight_file}', 'green'))
+		else:
+			torch.save(model.state_dict(), './src/KHI/utils/test_model.pth')
 
-	#model.apply(initialize)
+		get_modules_blank(model)
 
-	import torchsummary
-	model = model.eval()
-	torchsummary.summary(model, (3, 112, 112), 1, device='cpu')
-	
-	print('before')
-	get_modules_blank(model)
+		temp = torch.ones((1, 3,160,160))
+		model(temp)
+		export_weight_binary(model, './src/KHI/utils/test_model.w')
 
-	print('after')
-	get_modules_blank(model)
+	elif job_type == 3:
+		load_weight = True
+		if load_weight:
+			output_dir = 'E:/vscode/Torch/MultiNet_OD_custom/model/20220208_blaze_tl_160'
+			weight_list = glob.glob(output_dir + '/*-*.pth')
+			weight_list = glob.glob(output_dir + '/*-00007.pth')
+			weight_file = weight_list[-1]
 
-	#model.backbone.conv1.register_forward_hook(get_feature)
-	#model.backbone.sbb01.dwconv1.fused_conv.register_forward_hook(get_feature)
-	#model.backbone.sbb01.pwconv1.fused_conv.register_forward_hook(get_feature)
-	#model.backbone.sbb03.dwconv1.fused_conv.register_forward_hook(get_feature)
-	#model.backbone.sbb03.pwconv1.fused_conv.register_forward_hook(get_feature)
-	temp = torch.ones((1, 3,160,160))
-	model(temp)
-	export_weight_binary(model, './src/KHI/utils/detection_test.w')
-	# flatten_weight_file = './src/KHI/utils/detection1'
-	# bin_file = open(flatten_weight_file + '.w', 'wb')
-	# export_binary(model, bin_file)
-	# bin_file.close()
+			#weight_file = './src/KHI/utils/test_model.pth'
+			model.load_state_dict(torch.load(weight_file), strict=False)
+			print(colored(f'load model -> {weight_file}', 'green'))
 
-	import torch.onnx
-	dummy_data = torch.empty(1, 3, 112, 112, dtype=torch.float32)
-	torch.onnx.export(model, dummy_data, './src/KHI/utils/detection_model.onnx',
-					export_params=True,
-					do_constant_folding=True,
-					verbose=True,
-					opset_version=10)
+		model = model.eval()
+		get_modules_blank(model)
+		#model.backbone.conv1.register_forward_hook(get_feature)
+		#model.backbone.sbb01.dwconv1.fused_conv.register_forward_hook(get_feature)
+		#model.backbone.sbb01.pwconv1.fused_conv.register_forward_hook(get_feature)
+		#model.backbone.sbb02.dwconv1.fused_conv.register_forward_hook(get_feature)
+
+		#model.backbone.sbb02.dwconv1.fused_conv.register_forward_hook(get_feature)
+		#model.backbone.sbb03.dwconv1.fused_conv.register_forward_hook(get_feature)
+		#model.backbone.sbb02.dwconv1.register_forward_hook(get_feature)
+		#model.backbone.sbb02.pwconv1.register_forward_hook(get_feature)
+
+		#model.backbone.sbb01.dwconv1.fused_conv.register_forward_hook(get_feature)
+		#model.backbone.sbb02.dwconv1.fused_conv.register_forward_hook(get_feature)
+		#model.backbone.sbb03.dwconv1.fused_conv.register_forward_hook(get_feature)
+		#model.backbone.sbb03.pwconv1.fused_conv.register_forward_hook(get_feature)
+		#model.backbone.sbb03.pool.register_forward_hook(get_feature)
+
+
+
+		# backbone
+		#model.backbone.sbb02.dwconv1.fused_conv.register_forward_hook(get_feature)
+		#model.backbone.sbb03.dwconv1.fused_conv.register_forward_hook(get_feature)
+		#model.backbone.sbb04.dwconv1.fused_conv.register_forward_hook(get_feature)
+		#model.backbone.sbb05.dwconv1.fused_conv.register_forward_hook(get_feature)
+		#model.backbone.dbb01.dwconv1.fused_conv.register_forward_hook(get_feature)
+		#model.backbone.dbb02.dwconv1.fused_conv.register_forward_hook(get_feature)
+		#model.backbone.dbb03.dwconv1.fused_conv.register_forward_hook(get_feature)
+		#model.backbone.dbb04.dwconv1.fused_conv.register_forward_hook(get_feature)
+		#model.backbone.dbb05.dwconv1.fused_conv.register_forward_hook(get_feature)
+		#model.backbone.dbb06.dwconv1.fused_conv.register_forward_hook(get_feature)
+
+		# neck
+		#model.neck.up.register_forward_hook(get_feature)
+		#model.neck.act.register_forward_hook(get_feature)
+		#model.neck.pwconv_7x7.register_forward_hook(get_feature)
+		#model.neck.register_forward_hook(get_feature)
+		#model.head.keypoint_out.register_forward_hook(get_feature)
+
+		# head
+		# model.head.offset_pwconv1.register_forward_hook(get_feature)
+		# model.head.offset_pwconv2.register_forward_hook(get_feature)
+		# model.head.offset_out.register_forward_hook(get_feature)
+		# model.head.size_pwconv1.register_forward_hook(get_feature)
+		# model.head.size_pwconv2.register_forward_hook(get_feature)
+		# model.head.size_out.register_forward_hook(get_feature)
+		# model.head.keypoint_pwconv1.register_forward_hook(get_feature)
+		# model.head.keypoint_pwconv2.register_forward_hook(get_feature)
+		# model.head.keypoint_out.register_forward_hook(get_feature)
+
+		# model.conv1.register_forward_hook(get_feature)
+		# model.sconv1.register_forward_hook(get_feature)
+		# model.sconv2.register_forward_hook(get_feature)
+		# #model.sconv2.dconv.register_forward_hook(get_feature)
+		# #model.sconv2.pconv.register_forward_hook(get_feature)
+		# model.sconv3.register_forward_hook(get_feature)
+		# model.sconv4.register_forward_hook(get_feature)
+		# model.sconv5.register_forward_hook(get_feature)
+
+		temp = torch.ones((1, 3, 160, 160))
+		output = model(temp)
+
+		from tl_postprocessing import *
+		post = Postprocessing_torch(7, 160)
+		out = [output['reg'], output['wh'], torch.sigmoid(output['cls'])]
+		post_out = post(out)
+
+		print(post_out)
+
+
+	elif job_type == 4:
+		model = model.eval()
+
+		import torchsummary
+		torchsummary.summary(model, (3, 160, 160), 1, device='cpu')
+
+		import torch.onnx
+		dummy_data = torch.empty(1, 3, 160, 160, dtype=torch.float32)
+		torch.onnx.export(model, dummy_data, './src/KHI/utils/detection_model.onnx',
+						export_params=True,
+						do_constant_folding=True,
+						verbose=True,
+						opset_version=10)
