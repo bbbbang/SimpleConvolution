@@ -359,13 +359,13 @@ std::chrono::microseconds _Convolution2D_Depthwise_k3_s2(Tensor* tensor, float* 
 				tempInputData3 += stride;
 				++val;
 			}
-			tempInputData1 += padWidth + 1;
-			tempInputData2 += padWidth + 1;
-			tempInputData3 += padWidth + 1;
+			tempInputData1 += padWidth + 2;
+			tempInputData2 += padWidth + 2;
+			tempInputData3 += padWidth + 2;
 		}
-		tempInputData1 += padWidth + 1;
-		tempInputData2 += padWidth + 1;
-		tempInputData3 += padWidth + 1;
+		tempInputData1 += padWidth * 2;
+		tempInputData2 += padWidth * 2;
+		tempInputData3 += padWidth * 2;
 
 		//data = tempOutputData;
 		//for (int i = 0; i < area; ++i)
@@ -636,6 +636,7 @@ std::vector<Detection> Postprocessing(Tensor* offset, Tensor* size, Tensor* keyp
 	float* offsetData = offset->data;
 	float* sizeData = size->data;
 
+	_Sigmoid(keypoint);
 
 	Tensor tempTensor;
 	tempTensor.data = new float[tensorDim * tensorDim * 64];
