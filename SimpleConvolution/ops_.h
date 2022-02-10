@@ -130,16 +130,19 @@ std::chrono::microseconds _MaxPool(Tensor* inputData, int kernel, int stride, in
 	int width = inputData->width;
 	int channel = inputData->channel;
 	int area = height * width;
-	int tensorSize = area * channel;
-
+	
 	int padHeight = height + padding * 2;
 	int padWidth = width + padding * 2;
+	int tensorSize = padHeight * padWidth * channel;
 
 	int outputHeight = (padHeight - kernel) / stride + 1;
 	int outputWidth = (padWidth - kernel) / stride + 1;
 
 	// padding
-	_ZeroPadding(inputData, padding);
+	if (padding > 0)
+	{
+		_ZeroPadding(inputData, padding);
+	}
 
 	float* data = inputData->data;
 	float* tempData = new float[tensorSize];
@@ -148,33 +151,101 @@ std::chrono::microseconds _MaxPool(Tensor* inputData, int kernel, int stride, in
 	float* saveTempPos = tempData;
 	float* saveDataPos = data;
 
-	for (int ch = 0; ch < channel; ++ch)
+	if (kernel == 3 && stride == 1)
 	{
-		for (int row = 0; row < height; row += stride)
+		for (int ch = 0; ch < channel; ++ch)
 		{
-			for (int col = 0; col < width; col += stride)
+			for (int row = 0; row < height; ++row)
 			{
-				float val1 = *tempData;
-				float val2 = *(tempData + 1);
-				float val3 = *(tempData + width);
-				float val4 = *(tempData + width + 1);
+				for (int col = 0; col < width; ++col)
+				{
+					float* pos1 = tempData;
+					float* pos2 = tempData + padWidth;
+					float* pos3 = pos2 + padWidth;
 
-				float m = val1;
-				m = val2 > m ? val2 : m;
-				m = val3 > m ? val3 : m;
-				m = val4 > m ? val4 : m;
+					float val1 = *pos1;
+					float val2 = *(pos1 + 1);
+					float val3 = *(pos1 + 2);
+					float val4 = *pos2;
+					float val5 = *(pos2 + 1);
+					float val6 = *(pos2 + 2);
+					float val7 = *pos3;
+					float val8 = *(pos3 + 1);
+					float val9 = *(pos3 + 2);
+					float m = val1;
+					m = val2 > m ? val2 : m;
+					m = val3 > m ? val3 : m;
+					m = val4 > m ? val4 : m;
+					m = val5 > m ? val5 : m;
+					m = val6 > m ? val6 : m;
+					m = val7 > m ? val7 : m;
+					m = val8 > m ? val8 : m;
+					m = val9 > m ? val9 : m;
+					*data = m;
 
-				//float max = std::max({ val1, val2, val3, val4 });
-				//*data = max;
+					++data;
+					++tempData;
+				}
+				tempData += 2;
+			}
+			tempData += padWidth*2;
+		}
+	}
+	else if (stride == 2)
+	{
+		for (int ch = 0; ch < channel; ++ch)
+		{
+			for (int row = 0; row < height; row += stride)
+			{
+				for (int col = 0; col < width; col += stride)
+				{
+					float val1 = *tempData;
+					float val2 = *(tempData + 1);
+					float val3 = *(tempData + padWidth);
+					float val4 = *(tempData + padWidth + 1);
+					float m = val1;
+					m = val2 > m ? val2 : m;
+					m = val3 > m ? val3 : m;
+					m = val4 > m ? val4 : m;
+					*data = m;
 
-				//*data = std::max({ val1, val2, val3, val4 });
-				*data++ = m;
-
-				tempData += stride;
-				//++data;
+					++data;
+					tempData += stride;
+				}
+				tempData += padWidth;
 			}
 		}
 	}
+
+	//for (int ch = 0; ch < channel; ++ch)
+	//{
+	//	for (int row = 0; row < height; row += stride)
+	//	{
+	//		for (int col = 0; col < width; col += stride)
+	//		{
+	//			float val1 = *tempData;
+	//			float val2 = *(tempData + 1);
+	//			float val3 = *(tempData + padWidth);
+	//			float val4 = *(tempData + padWidth + 1);
+
+	//			float m = val1;
+	//			m = val2 > m ? val2 : m;
+	//			m = val3 > m ? val3 : m;
+	//			m = val4 > m ? val4 : m;
+
+	//			//float max = std::max({ val1, val2, val3, val4 });
+	//			//*data = max;
+
+	//			//*data = std::max({ val1, val2, val3, val4 });
+	//			*data = m;
+
+	//			++data;
+	//			tempData += stride;
+	//			//++data;
+	//		}
+	//		//tempData += padWidth;
+	//	}
+	//}
 
 	inputData->height = outputHeight;
 	inputData->width = outputWidth;
@@ -222,6 +293,7 @@ std::chrono::microseconds _Resize(Tensor* inputData, float scale)
 				data += 2;
 				++tempData;
 			}
+			data += outputWidth;
 		}
 	}
 
