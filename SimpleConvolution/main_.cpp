@@ -24,7 +24,7 @@ std::chrono::microseconds transposeOps;
 
 
 std::unordered_map<std::string, Layer> layersMap;
-std::string weightsName = "E:/vscode/Torch/MultiNet_OD_custom/src/KHI/utils/tl_160.w";
+std::string weightsName = "E:/vscode/Torch/MultiNet_OD_custom/src/KHI/utils/tl_160.txt";
 
 Tensor x;
 Tensor shortcutTensor;
@@ -408,7 +408,8 @@ int main()
 	//std::unordered_map<std::string, Layer> layersMap;
 
 	//std::string weightsName = "E:/vscode/Torch/MultiNet_OD_custom/src/KHI/utils/detection_test.w";
-	ReadWeights_debug(weightsName, layersMap);
+	//ReadWeights_debug(weightsName, layersMap);
+	ReadWeights_txt(weightsName, layersMap);
 
 	for (std::pair<std::string, Layer> elem : layersMap)
 	{
@@ -462,8 +463,6 @@ int main()
 		cv::cvtColor(temp, temp, cv::COLOR_BGR2RGB);
 		temp.convertTo(temp, CV_32FC3, 1.0f/127.5f, -1.0f);
 
-
-		std::cout << "\n\n";
 		memcpy(x.data, temp.data, sizeof(float) * temp.size().height * temp.size().width * temp.channels());
 		x.width = inputSize;
 		x.height = inputSize;
