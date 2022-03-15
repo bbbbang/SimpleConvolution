@@ -1,3 +1,4 @@
+#define _CRT_SECURE_NO_WARNINGS
 
 #include <stdio.h>
 #include <string.h>
@@ -5,9 +6,13 @@
 #include <math.h>
 
 
+//void CopyTensor(Tensor* dst, Tensor* src);
+//void ReadWeights_binary(const char* fileName, Layer* map);
 
+// global
+float tempTensor[2457600];
 
-//// struct
+// struct
 typedef struct _Tensor
 {
 	int height;
@@ -15,8 +20,8 @@ typedef struct _Tensor
 	int channel;
 
 	float* data;
+	//float data[80 * 80 * 96];
 }Tensor;
-
 
 typedef struct _Layer
 {
@@ -31,191 +36,96 @@ typedef struct _Layer
 
 	float* weights;
 	float* bias;
-
-	//convolution conv;
 }Layer;
 
 
-
-
-
-#define BUFFER_SIZE 256
-
-void ReadWeights_debug(const char* fileName, Layer* map);
-void ReadWeights_txt(const char* fileName, Layer* map);
-
-void ReadWeights_debug(const char* fileName, Layer* map)
+void ReadWeights_binary(const char* fileName, Layer* map)
 {
-	std::ifstream weightFile(fileName, std::ios::binary);
-	
+	FILE* fp = fopen(fileName, "rb");
 
-	if (weightFile.is_open())
+	if (fp == NULL)
 	{
-		float data;
+	}
+	float data;
 
-		int inChannel;
-		int outChannel;
-		int kernel;
-		int stride;
-		int padding;
-		int group;
+	int inChannel;
+	int outChannel;
+	int kernel;
+	int stride;
+	int padding;
+	int group;
 
-		std::vector<float> weights;
-		std::vector<float> bias;
-		int weightSize;
+	float* weights = NULL;
+	float* bias = NULL;
+	int weightSize;
 
-		int layersNum = 0;
-		int weightNum = 0;
-		int biasNum = 0;
+	int layersNum = -1;
+	int weightNum = 0;
+	int biasNum = 0;
 
-		while (weightFile)
+
+	while (!feof(fp))
+	{
+		fread(&data, sizeof(float), 1, fp);
+		if ((int)data == 9000)
 		{
-			weightFile.read(reinterpret_cast<char*>(&data), sizeof(float));
-			//std::cout << weight << std::endl;
+			//Layer tempLayer = Layer{};
 
-			if ((int)data == 9000)
+			if (layersNum > -1)
 			{
-				if (layersNum > 0)
-				{
-					map[std::to_string(layersNum)] = Layer{ inChannel, outChannel, kernel, stride, padding, group, weightSize, weights, bias };
-				}
-				weights.clear();
-				bias.clear();
-				weightNum = 0;
-				biasNum = 0;
-				layersNum += 1;
+				Layer temp = { inChannel, outChannel, kernel, stride, padding, group, weightSize, weights, bias };
+				map[layersNum] = temp;
+			}
+			//weights.clear();
+			//bias.clear();
+			weightNum = 0;
+			biasNum = 0;
+			layersNum += 1;
 
-				weightFile.read(reinterpret_cast<char*>(&data), sizeof(float));
-				inChannel = (int)data;
-				weightFile.read(reinterpret_cast<char*>(&data), sizeof(float));
-				outChannel = (int)data;
-				weightFile.read(reinterpret_cast<char*>(&data), sizeof(float));
-				kernel = (int)data;
-				weightFile.read(reinterpret_cast<char*>(&data), sizeof(float));
-				stride = (int)data;
-				weightFile.read(reinterpret_cast<char*>(&data), sizeof(float));
-				padding = (int)data;
-				weightFile.read(reinterpret_cast<char*>(&data), sizeof(float));
-				group = (int)data;
+			fread(&data, sizeof(float), 1, fp);
+			inChannel = (int)data;
+			fread(&data, sizeof(float), 1, fp);
+			outChannel = (int)data;
+			fread(&data, sizeof(float), 1, fp);
+			kernel = (int)data;
+			fread(&data, sizeof(float), 1, fp);
+			stride = (int)data;
+			fread(&data, sizeof(float), 1, fp);
+			padding = (int)data;
+			fread(&data, sizeof(float), 1, fp);
+			group = (int)data;
 
-				if (group == 1)
-				{
-					weightSize = inChannel * outChannel * kernel * kernel;
-				}
-				else
-				{
-					weightSize = inChannel * 1 * kernel * kernel;
-				}
+			if (group == 1)
+			{
+				weightSize = inChannel * outChannel * kernel * kernel;
 			}
 			else
 			{
-				if (weightNum < weightSize)
-				{
-					weights.push_back(data);
-					weightNum += 1;
-				}
-				else if (weightNum >= weightSize && biasNum < outChannel)
-				{
-					bias.push_back(data);
-					biasNum += 1;
-				}
+				weightSize = inChannel * 1 * kernel * kernel;
 			}
+
+			weights = (float*)malloc(sizeof(float) * weightSize);
+			bias = (float*)malloc(sizeof(float) * outChannel);
 		}
-		map[std::to_string(layersNum)] = Layer{ inChannel, outChannel, kernel, stride, padding, group, weightSize, weights, bias };
-		weightFile.close();
-	}
-	else
-	{
-		std::cout << "no file" << std::endl;
-	}
-
-}
-
-void ReadWeights_txt(const char* fileName, Layer* map)
-{
-	FILE* fp = fopen(fileName, "r");
-
-	char buffer[BUFFER_SIZE + 1];
-
-	if (weightFile.is_open())
-	{
-		float data;
-
-		int inChannel;
-		int outChannel;
-		int kernel;
-		int stride;
-		int padding;
-		int group;
-
-		std::vector<float> weights;
-		std::vector<float> bias;
-		int weightSize;
-
-		int layersNum = 0;
-		int weightNum = 0;
-		int biasNum = 0;
-
-		while (weightFile)
+		else
 		{
-			weightFile >> data;
-
-			if ((int)data == 9000)
+			if (weightNum < weightSize)
 			{
-				if (layersNum > 0)
-				{
-					map[std::to_string(layersNum)] = Layer{ inChannel, outChannel, kernel, stride, padding, group, weightSize, weights, bias };
-				}
-				weights.clear();
-				bias.clear();
-				weightNum = 0;
-				biasNum = 0;
-				layersNum += 1;
-
-				weightFile >> data;
-				inChannel = (int)data;
-				weightFile >> data;
-				outChannel = (int)data;
-				weightFile >> data;
-				kernel = (int)data;
-				weightFile >> data;
-				stride = (int)data;
-				weightFile >> data;
-				padding = (int)data;
-				weightFile >> data;
-				group = (int)data;
-
-				if (group == 1)
-				{
-					weightSize = inChannel * outChannel * kernel * kernel;
-				}
-				else
-				{
-					weightSize = inChannel * 1 * kernel * kernel;
-				}
+				weights[weightNum] = data;
+				//weights.push_back(data);
+				weightNum += 1;
 			}
-			else
+			else if (weightNum >= weightSize && biasNum < outChannel)
 			{
-				if (weightNum < weightSize)
-				{
-					weights.push_back(data);
-					weightNum += 1;
-				}
-				else if (weightNum >= weightSize && biasNum < outChannel)
-				{
-					bias.push_back(data);
-					biasNum += 1;
-				}
+				bias[biasNum] = data;
+				//bias.push_back(data);
+				biasNum += 1;
 			}
 		}
-		map[std::to_string(layersNum)] = Layer{ inChannel, outChannel, kernel, stride, padding, group, weightSize, weights, bias };
-		weightFile.close();
 	}
-	else
-	{
-		std::cout << "no file" << std::endl;
-	}
-
+	Layer temp = { inChannel, outChannel, kernel, stride, padding, group, weightSize, weights, bias };
+	map[layersNum] = temp;
+	fclose(fp);
 }
 
 
@@ -224,38 +134,6 @@ void ReadWeights_txt(const char* fileName, Layer* map)
 
 
 
-
-
-
-
-
-
-
-
-
-//// functions
-
-
-
-
-void CopyTensor(Tensor* dst, Tensor* src);
-void CopyTensor(Tensor* dst, Tensor* src, int height, int width, int channel);
-
-void CopyTensor(Tensor* dst, Tensor* src)
-{
-	dst->height = src->height;
-	dst->width = src->width;
-	dst->channel = src->channel;
-	memcpy(dst->data, src->data, sizeof(float) * dst->height * dst->width * dst->channel);
-}
-
-void CopyTensor(Tensor* dst, Tensor* src, int height, int width, int channel)
-{
-	dst->height = height;
-	dst->width = width;
-	dst->channel = channel;
-	memcpy(dst->data, src->data, sizeof(float) * dst->height * dst->width * dst->channel);
-}
 
 
 
