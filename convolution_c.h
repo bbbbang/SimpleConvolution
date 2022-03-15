@@ -1,23 +1,16 @@
-#include "ops_c.h"
-#include "utils_c.h"
+#include "ops.h"
 
 
-void _Convolution2D_k3_s1(Tensor* tensor, float* weight, float* bias, int inChannel, int outChannel, int kernel, int stride, int padding);
-
-void _Convolution2D_k3_s2(Tensor* tensor, float* weight, float* bias, int inChannel, int outChannel, int kernel, int stride, int padding);
-
-void _Convolution2D_Depthwise_k3_s1(Tensor* tensor, float* weight, float* bias, int inChannel, int outChannel, int kernel, int stride, int padding);
-
-void _Convolution2D_Depthwise_k3_s2(Tensor* tensor, float* weight, float* bias, int inChannel, int outChannel, int kernel, int stride, int padding);
-
-void _Convolution2D_Pointwise_k1_s1(Tensor* tensor, float* weight, float* bias, int inChannel, int outChannel, int kernel, int stride, int padding);
+//void _Convolution2D_k3_s1(Tensor* tensor, float* weight, float* bias, int inChannel, int outChannel, int kernel, int stride, int padding);
+//void _Convolution2D_k3_s2(Tensor* tensor, float* weight, float* bias, int inChannel, int outChannel, int kernel, int stride, int padding);
+//void _Convolution2D_Depthwise_k3_s1(Tensor* tensor, float* weight, float* bias, int inChannel, int outChannel, int kernel, int stride, int padding);
+//void _Convolution2D_Depthwise_k3_s2(Tensor* tensor, float* weight, float* bias, int inChannel, int outChannel, int kernel, int stride, int padding);
+//void _Convolution2D_Pointwise_k1_s1(Tensor* tensor, float* weight, float* bias, int inChannel, int outChannel, int kernel, int stride, int padding);
 
 
 void _Convolution2D_k3_s1(Tensor* tensor, float* weight, float* bias, int inChannel, int outChannel, int kernel, int stride, int padding)
 {
-	std::chrono::system_clock::time_point startTime = std::chrono::system_clock::now();
-
-	std::chrono::system_clock::time_point endTime = std::chrono::system_clock::now();
+	int a = 1;
 }
 
 void _Convolution2D_k3_s2(Tensor* tensor, float* weight, float* bias, int inChannel, int outChannel, int kernel, int stride, int padding)
@@ -39,19 +32,18 @@ void _Convolution2D_k3_s2(Tensor* tensor, float* weight, float* bias, int inChan
 	_ZeroPadding(tensor, padding);
 
 	float* data = tensor->data;
-	float* tempData = (float*)malloc(sizeof(float) * inChannel * padArea);
-	memcpy(tempData, data, sizeof(float) * inChannel * padArea);
+	//float* tempData = (float*)malloc(sizeof(float) * inChannel * padArea);
+	memcpy(tempTensor, data, sizeof(float) * inChannel * padArea);
 	memset(data, 0, sizeof(float) * outChannel * outputArea);
-	float* tempDataAddr = tempData;
+	//float* tempDataAddr = tempData;
 	float* dataAddr = data;
 
 	int kernelSize = inChannel * 9;
 
-	float* tempInputData1 = tempData;
-	float* tempInputData2 = tempData + padWidth;
+	float* tempInputData1 = tempTensor;
+	float* tempInputData2 = tempTensor + padWidth;
 	float* tempInputData3 = tempInputData2 + padWidth;
 
-	float weightVal[9];
 	for (int outCh = 0; outCh < outChannel; ++outCh)
 	{
 		int outKernel = outCh * kernelSize;
@@ -104,7 +96,7 @@ void _Convolution2D_k3_s2(Tensor* tensor, float* weight, float* bias, int inChan
 			++data;
 		}
 		++bias;
-		tempInputData1 = tempData;
+		tempInputData1 = tempTensor;
 		tempInputData2 = tempInputData1 + padWidth;
 		tempInputData3 = tempInputData2 + padWidth;
 	}
@@ -113,8 +105,12 @@ void _Convolution2D_k3_s2(Tensor* tensor, float* weight, float* bias, int inChan
 	tensor->width = outputWidth;
 	tensor->channel = outChannel;
 	tensor->data = dataAddr;
-	free(tempDataAddr);
-	tempDataAddr = NULL;
+
+	//tempInputData1 = NULL;
+	//tempInputData2 = NULL;
+	//tempInputData3 = NULL;
+	//free(tempData);
+	//tempDataAddr = NULL;
 }
 
 void _Convolution2D_Depthwise_k3_s1(Tensor* tensor, float* weight, float* bias, int inChannel, int outChannel, int kernel, int stride, int padding)
@@ -136,13 +132,13 @@ void _Convolution2D_Depthwise_k3_s1(Tensor* tensor, float* weight, float* bias, 
 	_ZeroPadding(tensor, padding);
 
 	float* data = tensor->data;
-	float* tempData = (float*)malloc(sizeof(float) * inChannel * padArea);
-	memcpy(tempData, data, sizeof(float) * inChannel * padArea);
+	//float* tempData = (float*)malloc(sizeof(float) * inChannel * padArea);
+	memcpy(tempTensor, data, sizeof(float) * inChannel * padArea);
 	memset(data, 0, sizeof(float) * outChannel * outputArea);
-	float* tempDataAddr = tempData;
+	//float* tempDataAddr = tempData;
 
-	float* tempInputData1 = tempData;
-	float* tempInputData2 = tempData + padWidth;
+	float* tempInputData1 = tempTensor;
+	float* tempInputData2 = tempTensor + padWidth;
 	float* tempInputData3 = tempInputData2 + padWidth;
 
 	float* val = data;
@@ -159,7 +155,7 @@ void _Convolution2D_Depthwise_k3_s1(Tensor* tensor, float* weight, float* bias, 
 		{
 			for (int col = 0; col < width; ++col)
 			{
-				* val += *(tempInputData1)*weightVal_1 + *(tempInputData1 + 1) * weightVal_2 + *(tempInputData1 + 2) * weightVal_3 +
+				*val += *(tempInputData1)*weightVal_1 + *(tempInputData1 + 1) * weightVal_2 + *(tempInputData1 + 2) * weightVal_3 +
 					*(tempInputData2)*weightVal_4 + *(tempInputData2 + 1) * weightVal_5 + *(tempInputData2 + 2) * weightVal_6 +
 					*(tempInputData3)*weightVal_7 + *(tempInputData3 + 1) * weightVal_8 + *(tempInputData3 + 2) * weightVal_9 + *bias;
 
@@ -180,8 +176,12 @@ void _Convolution2D_Depthwise_k3_s1(Tensor* tensor, float* weight, float* bias, 
 	}
 	tensor->height = outputHeight;
 	tensor->width = outputWidth;
-	free(tempDataAddr);
-	tempDataAddr = NULL;
+
+	//tempInputData1 = NULL;
+	//tempInputData2 = NULL;
+	//tempInputData3 = NULL;
+	//free(tempData);
+	//tempDataAddr = NULL;
 }
 
 void _Convolution2D_Depthwise_k3_s2(Tensor* tensor, float* weight, float* bias, int inChannel, int outChannel, int kernel, int stride, int padding)
@@ -202,14 +202,14 @@ void _Convolution2D_Depthwise_k3_s2(Tensor* tensor, float* weight, float* bias, 
 	// padding
 	_ZeroPadding(tensor, padding);
 	float* data = tensor->data;
-	float* tempData = (float*)malloc(sizeof(inChannel) * padArea);
-	memcpy(tempData, data, sizeof(float) * inChannel * padArea);
+	//float* tempData = (float*)malloc(sizeof(float) * inChannel * padArea);
+	memcpy(tempTensor, data, sizeof(float) * inChannel * padArea);
 	memset(data, 0, sizeof(float) * outChannel * outputArea);
-	float* tempDataAddr = tempData;
+	//float* tempDataAddr = tempTensor;
 
-	float* tempInputData1 = tempData;
-	float* tempInputData2 = tempData + padWidth;
-	float* tempInputData3 = tempData + padWidth + padWidth;
+	float* tempInputData1 = tempTensor;
+	float* tempInputData2 = tempTensor + padWidth;
+	float* tempInputData3 = tempTensor + padWidth + padWidth;
 	float* tempOutputData = data;
 
 	float* val = data;
@@ -246,8 +246,13 @@ void _Convolution2D_Depthwise_k3_s2(Tensor* tensor, float* weight, float* bias, 
 	}
 	tensor->height = outputHeight;
 	tensor->width = outputWidth;
-	free(tempDataAddr);
-	tempDataAddr = NULL;
+
+	//val = NULL;
+	//tempInputData1 = NULL;
+	//tempInputData2 = NULL;
+	//tempInputData3 = NULL;
+	//free(tempData);
+	//tempDataAddr = NULL;
 
 }
 
@@ -259,77 +264,87 @@ void _Convolution2D_Pointwise_k1_s1(Tensor* tensor, float* weight, float* bias, 
 	int area = height * width;
 
 	float* data = tensor->data;
-	float* tempData = (float*)malloc(sizeof(float) * inChannel * area);
-	memcpy(tempData, data, sizeof(float) * inChannel * area);
+	//float* tempData = (float*)malloc(sizeof(float) * inChannel * area);
+	memcpy(tempTensor, data, sizeof(float) * inChannel * area);
 	memset(data, 0, sizeof(float) * outChannel * area);
+
+
+	for (int outCh = 0; outCh < outChannel; ++outCh)
+	{
+		for (int i = 0; i < area; ++i)
+		{
+			float val = 0;
+			for (int inCh = 0; inCh < inChannel; ++inCh)
+			{
+				val += 
+
+			}
+		}
+	}
+
+
+
+
+
+
+
 
 	float* o = data;
 	for (int outCh = 0; outCh < outChannel; ++outCh)
 	{
 		float* d = o;
-		float* v = tempData;
-		for (int inCh = 0; inCh < inChannel; ++inCh)
+		float* v = tempTensor;
+
+		float weightVal = *weight;
+		for (int i = 0; i < area; ++i)
+		{
+			(*o) += *v * weightVal + *bias;
+			++o;
+			++v;
+		}
+		for (int inCh = 1; inCh < inChannel; ++inCh)
 		{
 			o = d;
 			float weightVal = *weight;
 
-			if (inCh == 0)
+			for (int i = 0; i < area; ++i)
 			{
-				for (int i = 0; i < area; ++i)
-				{
-					(*o) += *v * weightVal + *bias;
-					++o;
-					++v;
-				}
-			}
-			else
-			{
-				for (int i = 0; i < area; ++i)
-				{
-					(*o) += *v * weightVal;
-					++o;
-					++v;
-				}
+				(*o) += *v * weightVal;
+				++o;
+				++v;
 			}
 			++weight;
 		}
 		++bias;
 	}
+
 	tensor->channel = outChannel;
-	free(tempData);
-	tempData = NULL;
+	//free(tempData);
+	//tempData = NULL;
 }
 
 
 
-void Transpose(Tensor* tensor, int f);
-void Transpose(Tensor* tensor, int f)
-{
-	int height = tensor->height;
-	int width = tensor->width;
-	int channel = tensor->channel;
-
-	float* data = tensor->data;
-	float* transTensor = (float*)malloc(sizeof(float) * height * width * channel);
-	memcpy(transTensor, data, sizeof(float) * height * width * channel);
-
-	int idx = 0;
-	for (int row = 0; row < height; ++row)
-	{
-		for (int col = 0; col < width; ++col)
-		{
-			for (int ch = 0; ch < channel; ++ch, ++idx)
-			{
-				data[idx] = transTensor[ch * height * width + row * width + col];
-			}
-		}
-	}
-	free(transTensor);
-	transTensor = NULL;
-}
 
 
-void _Transpose(Tensor* tensor);
+
+
+
+
+
+
+
+
+
+
+//void Mult(Tensor* tensor, Tensor* _tensor);
+//void Equal(Tensor* tensor, Tensor* _tensor);
+//void _Transpose(Tensor* tensor);
+//void Transpose(Tensor* tensor);
+
+
+
+
 void _Transpose(Tensor* tensor)
 {
 	int height = tensor->height;
@@ -337,8 +352,8 @@ void _Transpose(Tensor* tensor)
 	int channel = tensor->channel;
 
 	float* data = tensor->data;
-	float* transTensor = (float*)malloc(sizeof(float) * height * width * channel);
-	memcpy(transTensor, data, sizeof(float) * height * width * channel);
+	//float* transTensor = (float*)malloc(sizeof(float) * height * width * channel);
+	memcpy(tempTensor, data, sizeof(float) * height * width * channel);
 
 	int idx = 0;
 	for (int ch = 0; ch < channel; ++ch)
@@ -347,17 +362,16 @@ void _Transpose(Tensor* tensor)
 		{
 			for (int col = 0; col < width; ++col)
 			{
-				data[idx] = transTensor[row * width * channel + col * channel + ch];
+				data[idx] = tempTensor[row * width * channel + col * channel + ch];
 				++idx;
 			}
 		}
 	}
-	free(transTensor);
-	transTensor = NULL;
+	//free(transTensor);
+	//transTensor = NULL;
 }
 
 
-void Transpose(Tensor* tensor);
 void Transpose(Tensor* tensor)
 {
 	int height = tensor->height;
@@ -365,8 +379,8 @@ void Transpose(Tensor* tensor)
 	int channel = tensor->channel;
 
 	float* data = tensor->data;
-	float* transTensor = (float*)malloc(sizeof(float) * height * width * channel);
-	memcpy(transTensor, data, sizeof(float) * height * width * channel);
+	//float* transTensor = (float*)malloc(sizeof(float) * height * width * channel);
+	memcpy(tempTensor, data, sizeof(float) * height * width * channel);
 
 	int idx = 0;
 	for (int row = 0; row < height; ++row)
@@ -375,17 +389,16 @@ void Transpose(Tensor* tensor)
 		{
 			for (int ch = 0; ch < channel; ++ch)
 			{
-				data[idx] = transTensor[ch * height * width + row * width + col];
+				data[idx] = tempTensor[ch * height * width + row * width + col];
 				++idx;
 			}
 		}
 	}
-	free(transTensor);
-	transTensor = NULL;
+	//free(transTensor);
+	//transTensor = NULL;
 }
 
 
-void Mult(Tensor* tensor, Tensor* _tensor);
 void Mult(Tensor* tensor, Tensor* _tensor)
 {
 	int size = tensor->height * tensor->width * tensor->channel;
@@ -399,7 +412,6 @@ void Mult(Tensor* tensor, Tensor* _tensor)
 }
 
 
-void Equal(Tensor* tensor, Tensor* _tensor);
 void Equal(Tensor* tensor, Tensor* _tensor)
 {
 	int size = tensor->height * tensor->width * tensor->channel;
@@ -413,6 +425,24 @@ void Equal(Tensor* tensor, Tensor* _tensor)
 }
 
 
+
+
+
+
+
+//std::vector<topk> TopK(Tensor* tensor, int k);
+//std::vector<Detection> Postprocessing(Tensor* offset, Tensor* size, Tensor* keypoint);
+
+//typedef struct _Detection
+//{
+//	int category;
+//	float score;
+//	int x1;
+//	int y1;
+//	int x2;
+//	int y2;
+//}Detection;
+//
 //struct topk
 //{
 //	int index;
@@ -439,9 +469,6 @@ void Equal(Tensor* tensor, Tensor* _tensor)
 //	}
 //};
 //
-//
-//
-//std::vector<topk> TopK(Tensor* tensor, int k);
 //
 //std::vector<topk> TopK(Tensor* tensor, int k)
 //{
@@ -472,20 +499,6 @@ void Equal(Tensor* tensor, Tensor* _tensor)
 //	return outputs;
 //}
 //
-//
-//
-//
-//typedef struct _Detection
-//{
-//	int category;
-//	float score;
-//	int x1;
-//	int y1;
-//	int x2;
-//	int y2;
-//}Detection;
-//
-//std::vector<Detection> Postprocessing(Tensor* offset, Tensor* size, Tensor* keypoint);
 //std::vector<Detection> Postprocessing(Tensor* offset, Tensor* size, Tensor* keypoint)
 //{
 //	int classNum = 2;
@@ -500,7 +513,8 @@ void Equal(Tensor* tensor, Tensor* _tensor)
 //	_Sigmoid(keypoint);
 //
 //	Tensor tempTensor;
-//	tempTensor.data = new float[tensorDim * tensorDim * 64];
+//	//tempTensor.data = new float[tensorDim * tensorDim * 64];
+//	tempTensor.data = (float*)malloc(sizeof(float) * tensorDim * tensorDim * 64);
 //
 //	CopyTensor(&tempTensor, keypoint);
 //	_MaxPool(&tempTensor, 3, 1, 1);
@@ -509,9 +523,10 @@ void Equal(Tensor* tensor, Tensor* _tensor)
 //
 //	Mult(keypoint, &tempTensor);
 //	Transpose(keypoint);
-//	delete[] tempTensor.data;
+//	free(tempTensor.data);
 //
 //	std::vector<topk> topkOutput = TopK(keypoint, k);
+//
 //
 //	int tempIndices[10];
 //	int yIndices[10];
