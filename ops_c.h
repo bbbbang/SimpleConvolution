@@ -1,19 +1,18 @@
-#include "utils_c.h"
+#include "utils.h"
 
 
 
-void _Relu(Tensor* inputData);
-void _ZeroConcat(Tensor* inputData);
-void _Softmax(Tensor* inputData);
+//void _Relu(Tensor* inputData);
+//void _ZeroConcat(Tensor* inputData);
+//void _Softmax(Tensor* inputData);
+//void _ZeroPadding(Tensor* inputData, int padding);
+//void _MaxPool(Tensor* inputData, int kernel, int stride, int padding);
+//void _Resize(Tensor* inputData, float scale);
+//void _Add(Tensor* inputData, Tensor* outputData);
+//void _Concat(Tensor* inputData, Tensor* outputData);
+//void _Sigmoid(Tensor* tensor);
 
-void _ZeroPadding(Tensor* inputData, int padding);
-void _MaxPool(Tensor* inputData, int kernel, int stride, int padding);
-void _Resize(Tensor* inputData, float scale);
 
-void _Add(Tensor* inputData, Tensor* outputData);
-void _Concat(Tensor* inputData, Tensor* outputData);
-
-void _Sigmoid(Tensor* tensor);
 
 void _Relu(Tensor* inputData)
 {
@@ -22,12 +21,14 @@ void _Relu(Tensor* inputData)
 
 	for (int i = 0; i < size; ++i)
 	{
+		//float val = data[i];
+		//data[i] = (val < 0) ? 0 : val;
 		data[i] = (data[i] < 0) ? 0 : data[i];
 	}
 }
 void _ZeroConcat(Tensor* inputData)
 {
-	float* data = inputData->data;
+	unsigned int* data = inputData->data;
 	int size = inputData->width * inputData->height * inputData->channel;
 
 	for (int i = size; i < size * 2; ++i)
@@ -66,10 +67,10 @@ void _ZeroPadding(Tensor* inputData, int padding)
 	int outputArea = outputWidth * outputWidth;
 
 	float* data = inputData->data;
-	float* tempData = (float*)malloc(sizeof(float) * area * channel);
-	memcpy(tempData, data, sizeof(float) * area * channel);
+	//float* tempData = (float*)malloc(sizeof(float) * area * channel);
+	memcpy(tempTensor, data, sizeof(float) * area * channel);
 	memset(data, 0, sizeof(float) * outputArea * channel);
-	float* tempDataAddr = tempData;
+	float* tempDataAddr = tempTensor;
 	float* dataAddr = data;
 
 	for (int ch = 0; ch < channel; ++ch)
@@ -80,9 +81,9 @@ void _ZeroPadding(Tensor* inputData, int padding)
 			++data;
 			for (int col = 0; col < width; ++col)
 			{
-				*data = *tempData;
+				*data = *tempDataAddr;
 				++data;
-				++tempData;
+				++tempDataAddr;
 			}
 			++data;
 		}
@@ -91,8 +92,8 @@ void _ZeroPadding(Tensor* inputData, int padding)
 	inputData->height = outputWidth;
 	inputData->width = outputWidth;
 	inputData->data = dataAddr;
-	free(tempDataAddr);
-	tempDataAddr = NULL;
+	//free(tempDataAddr);
+	//tempDataAddr = NULL;
 }
 void _MaxPool(Tensor* inputData, int kernel, int stride, int padding)
 {
@@ -115,10 +116,10 @@ void _MaxPool(Tensor* inputData, int kernel, int stride, int padding)
 	}
 
 	float* data = inputData->data;
-	float* tempData = (float*)malloc(sizeof(float) * tensorSize);
-	memcpy(tempData, data, sizeof(float) * tensorSize);
+	//float* tempData = (float*)malloc(sizeof(float) * tensorSize);
+	memcpy(tempTensor, data, sizeof(float) * tensorSize);
 	//memset(data, 0, sizeof(float) * area * channel);
-	float* tempDataAddr = tempData;
+	float* tempDataAddr = tempTensor;
 	float* dataAddr = data;
 
 	if (kernel == 3 && stride == 1)
@@ -129,8 +130,8 @@ void _MaxPool(Tensor* inputData, int kernel, int stride, int padding)
 			{
 				for (int col = 0; col < width; ++col)
 				{
-					float* pos1 = tempData;
-					float* pos2 = tempData + padWidth;
+					float* pos1 = tempDataAddr;
+					float* pos2 = tempDataAddr + padWidth;
 					float* pos3 = pos2 + padWidth;
 
 					float val1 = *pos1;
@@ -154,11 +155,11 @@ void _MaxPool(Tensor* inputData, int kernel, int stride, int padding)
 					*data = m;
 
 					++data;
-					++tempData;
+					++tempDataAddr;
 				}
-				tempData += 2;
+				tempDataAddr += 2;
 			}
-			tempData += padWidth * 2;
+			tempDataAddr += padWidth * 2;
 		}
 	}
 	else if (stride == 2)
@@ -169,10 +170,10 @@ void _MaxPool(Tensor* inputData, int kernel, int stride, int padding)
 			{
 				for (int col = 0; col < width; col += stride)
 				{
-					float val1 = *tempData;
-					float val2 = *(tempData + 1);
-					float val3 = *(tempData + padWidth);
-					float val4 = *(tempData + padWidth + 1);
+					float val1 = *tempDataAddr;
+					float val2 = *(tempDataAddr + 1);
+					float val3 = *(tempDataAddr + padWidth);
+					float val4 = *(tempDataAddr + padWidth + 1);
 					float m = val1;
 					m = val2 > m ? val2 : m;
 					m = val3 > m ? val3 : m;
@@ -180,9 +181,9 @@ void _MaxPool(Tensor* inputData, int kernel, int stride, int padding)
 					*data = m;
 
 					++data;
-					tempData += stride;
+					tempDataAddr += stride;
 				}
-				tempData += padWidth;
+				tempDataAddr += padWidth;
 			}
 		}
 	}
@@ -190,8 +191,8 @@ void _MaxPool(Tensor* inputData, int kernel, int stride, int padding)
 	inputData->height = outputHeight;
 	inputData->width = outputWidth;
 	inputData->data = dataAddr;
-	free(tempDataAddr);
-	tempDataAddr = NULL;
+	//free(tempDataAddr);
+	//tempDataAddr = NULL;
 }
 void _Resize(Tensor* inputData, float scale)
 {
@@ -205,10 +206,10 @@ void _Resize(Tensor* inputData, float scale)
 	int outputArea = outputHeight * outputWidth;
 
 	float* data = inputData->data;
-	float* tempData = (float*)malloc(sizeof(float) * area * channel);
-	memcpy(tempData, data, sizeof(float) * area * channel);
+	//float* tempData = (float*)malloc(sizeof(float) * area * channel);
+	memcpy(tempTensor, data, sizeof(float) * area * channel);
 	memset(data, 0, sizeof(float) * outputArea * channel);
-	float* tempDataAddr = tempData;
+	float* tempDataAddr = tempTensor;
 	float* dataAddr = data;
 
 	for (int ch = 0; ch < channel; ++ch)
@@ -217,7 +218,7 @@ void _Resize(Tensor* inputData, float scale)
 		{
 			for (int col = 0; col < width; ++col)
 			{
-				float val = *tempData;
+				float val = *tempDataAddr;
 
 				*data = val;
 				*(data + 1) = val;
@@ -225,7 +226,7 @@ void _Resize(Tensor* inputData, float scale)
 				*(data + outputWidth + 1) = val;
 
 				data += 2;
-				++tempData;
+				++tempDataAddr;
 			}
 			data += outputWidth;
 		}
@@ -234,8 +235,8 @@ void _Resize(Tensor* inputData, float scale)
 	inputData->height = outputHeight;
 	inputData->width = outputWidth;
 	inputData->data = dataAddr;
-	free(tempDataAddr);
-	tempDataAddr = NULL;
+	//free(tempDataAddr);
+	//tempDataAddr = NULL;
 }
 
 void _Add(Tensor* inputData, Tensor* outputData)
@@ -272,4 +273,15 @@ void _Sigmoid(Tensor* tensor)
 	{
 		data[i] = 1 / (1 + exp(-data[i]));
 	}
+}
+
+
+
+
+void CopyTensor(Tensor* dst, Tensor* src)
+{
+	dst->height = src->height;
+	dst->width = src->width;
+	dst->channel = src->channel;
+	memcpy(dst->data, src->data, sizeof(float) * dst->height * dst->width * dst->channel);
 }
