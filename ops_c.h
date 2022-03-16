@@ -14,21 +14,176 @@
 
 
 
+// h w c -> c h w
+void _Transpose(Tensor* tensor)
+{
+	size_t height = tensor->height;
+	size_t width = tensor->width;
+	size_t channel = tensor->channel;
+
+	float* data = tensor->data;
+	memcpy(tempTensor, data, sizeof(float) * height * width * channel);
+
+	size_t idx = 0;
+	for (size_t ch = 0; ch < channel; ++ch)
+	{
+		for (size_t row = 0; row < height; ++row)
+		{
+			for (size_t col = 0; col < width; ++col)
+			{
+				data[idx] = tempTensor[row * width * channel + col * channel + ch];
+				++idx;
+			}
+		}
+	}
+	size_t area = height * width;
+	for (size_t ch = 0; ch < channel; ++ch)
+	{
+		for (size_t i = 0; i < area; ++i)
+		{
+			tempTensor[i];
+			tempTensor[i + channel];
+		}
+	}
+
+	for (size_t i = 0; i < area; ++i)
+	{
+		for (size_t ch = 0; ch < channel; ++ch)
+		{
+			tempTensor[i];
+			tempTensor[i + channel];
+		}
+	}
+}
+
+// c h w -> h w c
+void Transpose(Tensor* tensor)
+{
+	size_t height = tensor->height;
+	size_t width = tensor->width;
+	size_t channel = tensor->channel;
+
+	float* data = tensor->data;
+	memcpy(tempTensor, data, sizeof(float) * height * width * channel);
+
+	size_t idx = 0;
+	for (size_t row = 0; row < height; ++row)
+	{
+		for (size_t col = 0; col < width; ++col)
+		{
+			for (size_t ch = 0; ch < channel; ++ch)
+			{
+				data[idx] = tempTensor[ch * height * width + row * width + col];
+				++idx;
+			}
+		}
+	}
+}
+
+
+
+
 void _Relu(Tensor* inputData)
 {
 	float* data = inputData->data;
 	int size = inputData->width * inputData->height * inputData->channel;
 
-	for (int i = 0; i < size; ++i)
+	
+	if (size % 10 == 0)
 	{
-		//float val = data[i];
-		//data[i] = (val < 0) ? 0 : val;
-		data[i] = (data[i] < 0) ? 0 : data[i];
+		float ff[10];
+		for (int i = 0; i < size; i += 10)
+		{
+			memcpy(ff, data, sizeof(float) * 10);
+			//ff[0] = max(ff[0], 0);
+			//ff[1] = max(ff[1], 0);
+			//ff[2] = max(ff[2], 0);
+			//ff[3] = max(ff[3], 0);
+			//ff[4] = max(ff[4], 0);
+			//ff[5] = max(ff[5], 0);
+			//ff[6] = max(ff[6], 0);
+			//ff[7] = max(ff[7], 0);
+			//ff[8] = max(ff[8], 0);
+			//ff[9] = max(ff[9], 0);
+
+			ff[0] = (ff[0] < 0) ? 0 : ff[0];
+			ff[1] = (ff[1] < 0) ? 0 : ff[1];
+			ff[2] = (ff[2] < 0) ? 0 : ff[2];
+			ff[3] = (ff[3] < 0) ? 0 : ff[3];
+			ff[4] = (ff[4] < 0) ? 0 : ff[4];
+			ff[5] = (ff[5] < 0) ? 0 : ff[5];
+			ff[6] = (ff[6] < 0) ? 0 : ff[6];
+			ff[7] = (ff[7] < 0) ? 0 : ff[7];
+			ff[8] = (ff[8] < 0) ? 0 : ff[8];
+			ff[9] = (ff[9] < 0) ? 0 : ff[9];
+			memcpy(data, ff, sizeof(float) * 10);
+			data += 10;
+
+			//data[i] = max(data[i], 0);
+			//data[i+1] = max(data[i+1], 0);
+			//data[i+2] = max(data[i+2], 0);
+			//data[i+3] = max(data[i+3], 0);
+			//data[i+4] = max(data[i+4], 0);
+			//data[i+5] = max(data[i+5], 0);
+			//data[i+6] = max(data[i+6], 0);
+			//data[i+7] = max(data[i+7], 0);
+			//data[i+8] = max(data[i+8], 0);
+			//data[i + 9] = max(data[i + 9], 0);
+
+			//data[i] = (data[i] < 0) ? 0 : data[i];
+			//data[i+1] = (data[i+1] < 0) ? 0 : data[i+1];
+			//data[i+2] = (data[i+2] < 0) ? 0 : data[i+2];
+			//data[i+3] = (data[i+3] < 0) ? 0 : data[i+3];
+			//data[i+4] = (data[i+4] < 0) ? 0 : data[i+4];
+			//data[i+5] = (data[i+5] < 0) ? 0 : data[i+5];
+			//data[i+6] = (data[i+6] < 0) ? 0 : data[i+6];
+			//data[i+7] = (data[i+7] < 0) ? 0 : data[i+7];
+			//data[i+8] = (data[i+8] < 0) ? 0 : data[i+8];
+			//data[i+9] = (data[i+9] < 0) ? 0 : data[i+9];
+		}
+	}
+	else
+	{
+		float ff[5];
+		for (int i = 0; i < size; i += 5)
+		{
+			memcpy(ff, data, sizeof(float) * 5);
+			//ff[0] = max(ff[0], 0);
+			//ff[1] = max(ff[1], 0);
+			//ff[2] = max(ff[2], 0);
+			//ff[3] = max(ff[3], 0);
+			//ff[4] = max(ff[4], 0);
+			//ff[5] = max(ff[5], 0);
+			//ff[6] = max(ff[6], 0);
+			//ff[7] = max(ff[7], 0);
+			//ff[8] = max(ff[8], 0);
+			//ff[9] = max(ff[9], 0);
+
+			ff[0] = (ff[0] < 0) ? 0 : ff[0];
+			ff[1] = (ff[1] < 0) ? 0 : ff[1];
+			ff[2] = (ff[2] < 0) ? 0 : ff[2];
+			ff[3] = (ff[3] < 0) ? 0 : ff[3];
+			ff[4] = (ff[4] < 0) ? 0 : ff[4];
+			memcpy(data, ff, sizeof(float) * 5);
+			data += 5;
+
+			//data[i] = max(data[i], 0);
+			//data[i + 1] = max(data[i + 1], 0);
+			//data[i + 2] = max(data[i + 2], 0);
+			//data[i + 3] = max(data[i + 3], 0);
+			//data[i + 4] = max(data[i + 4], 0);
+
+			//data[i] = (data[i] < 0) ? 0 : data[i];
+			//data[i + 1] = (data[i + 1] < 0) ? 0 : data[i + 1];
+			//data[i + 2] = (data[i + 2] < 0) ? 0 : data[i + 2];
+			//data[i + 3] = (data[i + 3] < 0) ? 0 : data[i + 3];
+			//data[i + 4] = (data[i + 4] < 0) ? 0 : data[i + 4];
+		}
 	}
 }
 void _ZeroConcat(Tensor* inputData)
 {
-	unsigned int* data = inputData->data;
+	float* data = inputData->data;
 	int size = inputData->width * inputData->height * inputData->channel;
 
 	for (int i = size; i < size * 2; ++i)
@@ -246,10 +401,40 @@ void _Add(Tensor* inputData, Tensor* outputData)
 
 	int size = inputData->width * inputData->height * inputData->channel;
 
-	for (int i = 0; i < size; ++i)
+	if (size % 10 == 0)
 	{
-		_data[i] += data[i];
+		for (int i = 0; i < size; i += 10)
+		{
+			_data[i] += data[i];
+			_data[i + 1] += data[i + 1];
+			_data[i + 2] += data[i + 2];
+			_data[i + 3] += data[i + 3];
+			_data[i + 4] += data[i + 4];
+			_data[i + 5] += data[i + 5];
+			_data[i + 6] += data[i + 6];
+			_data[i + 7] += data[i + 7];
+			_data[i + 8] += data[i + 8];
+			_data[i + 9] += data[i + 9];
+		}
 	}
+	else
+	{
+		for (int i = 0; i < size; i += 5)
+		{
+			_data[i] += data[i];
+			_data[i + 1] += data[i + 1];
+			_data[i + 2] += data[i + 2];
+			_data[i + 3] += data[i + 3];
+			_data[i + 4] += data[i + 4];
+		}
+	}
+
+
+
+	//for (int i = 0; i < size; ++i)
+	//{
+	//	_data[i] += data[i];
+	//}
 }
 void _Concat(Tensor* inputData, Tensor* outputData)
 {
