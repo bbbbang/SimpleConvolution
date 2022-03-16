@@ -127,14 +127,3 @@ void ReadWeights_binary(const char* fileName, Layer* map)
 	map[layersNum] = temp;
 	fclose(fp);
 }
-
-
-
-
-
-
-
-
-
-
-
